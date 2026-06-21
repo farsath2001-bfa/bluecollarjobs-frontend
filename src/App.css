@@ -1,0 +1,16 @@
+/* .job-card {
+  transition: 0.3s;
+}
+
+.job-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+} */
+.job-card {
+  transition: 5s;
+  border-radius: 15px;
+}
+
+.job-card:hover {
+  transform: translateY(-5px);
+}

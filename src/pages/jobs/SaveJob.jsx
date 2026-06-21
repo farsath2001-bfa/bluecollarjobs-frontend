@@ -1,41 +1,4 @@
-// import React from "react";
-// import JobCard from "../../Components/Jobcard";
-// import { saveJob } from "../../service/api";
 
-// function SavedJobs() {
-
-//   const savedIds = JSON.parse(localStorage.getItem("savedJobs")) || [];
-
-//   const jobs = [
-//     { id: 1, title: "Driver", company: "Emirates Transport", location: "Dubai", salary: "AED 2500" },
-//     { id: 2, title: "Electrician", company: "Al Noor Technical Services", location: "Sharjah", salary: "AED 3000" },
-//     { id: 3, title: "Cleaner", company: "Bright Facility", location: "Abu Dhabi", salary: "AED 1800" }
-//   ];
-
-//   const savedJobs = jobs.filter(job => savedIds.includes(job.id));
-
-//   return (
-//     <div className="container mt-5">
-
-//       <h2 className="text-center mb-4">Saved Jobs</h2>
-
-//       <div className="row g-4">
-
-//         {savedJobs.length > 0 ? (
-//           savedJobs.map(job => (
-//             <JobCard key={job.id} {...job} />
-//           ))
-//         ) : (
-//           <p className="text-center">No saved jobs</p>
-//         )}
-
-//       </div>
-
-//     </div>
-//   );
-// }
-
-// export default SavedJobs;  
 
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";

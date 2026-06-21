@@ -118,7 +118,7 @@
 
 
 import React, { useState, useEffect } from "react";
-import JobCard from "../../components/Jobcard";
+import JobCard from "../../components/JobCard";
 import { getJobs } from "../../service/api";
 
 function Job() {

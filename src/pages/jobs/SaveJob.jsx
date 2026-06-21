@@ -39,7 +39,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import JobCard from "../../components/Jobcard";
+import JobCard from "../../components/JobCard";
 import { getJobById } from "../../service/api";
 
 function SavedJobs() {

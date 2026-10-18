@@ -1,423 +1,191 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FaSearch, FaMapMarkerAlt } from "react-icons/fa";
 import JobCategory from "../components/JobCategory";
 import JobCard from "../components/JobCard";
-import { getJobs } from "../service/api";
+import { JobRowSkeleton, EmptyState } from "../components/ui";
+import { useTitle } from "../utils/useTitle";
+import { getJobs, getJobMeta, normalizeJobList } from "../service/api";
+import { EMIRATES } from "../utils/format";
+import construction from "../assets/Images/hero-construction.jpg";
+import delivery from "../assets/Images/hero-delivery.jpg";
+import warehouse from "../assets/Images/hero-warehouse.jpg";
 
 function Home() {
+  useTitle();
+  const navigate = useNavigate();
+  const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState("");
+  const [meta, setMeta] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
-  const categories = [
-    { title: "Driver",       jobs: 120 },
-    { title: "Construction", jobs: 80  },
-    { title: "Cleaning",     jobs: 60  },
-    { title: "Technician",   jobs: 50  },
-    { title: "Delivery",     jobs: 40  },
-    { title: "Security",     jobs: 35  },
-    { title: "Plumber",      jobs: 60  },
-    { title: "Electrician",  jobs: 40  }
-  ];
-
-  const [jobTitle, setJobTitle]     = useState("");
-  const [location, setLocation]     = useState("");
-  const [allJobs, setAllJobs]       = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [searched, setSearched]     = useState(false);
-
-  // ✅ Fetch jobs from backend on page load
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const { data } = await getJobs();
-        setAllJobs(data);
-        setFilteredJobs(data);
-      } catch (err) {
-        console.log("Error fetching jobs:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJobs();
+    Promise.all([getJobs({ limit: 6 }), getJobMeta().catch(() => ({ data: null }))])
+      .then(([jobsRes, metaRes]) => {
+        setJobs(normalizeJobList(jobsRes.data).jobs);
+        setMeta(metaRes.data);
+      })
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false));
   }, []);
 
-  // ✅ Search filters from backend data
-  const handleSearch = async () => {
-  setSearched(true);
-  try {
-    setLoading(true);
-    const { data } = await getJobs({
-      search: jobTitle,    // ← sends to backend as ?search=driver
-      location: location   // ← sends to backend as ?location=dubai
-    });
-    setFilteredJobs(data);
-  } catch (err) {
-    console.log("Search error:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (keyword.trim()) params.set("keyword", keyword.trim());
+    if (location) params.set("location", location);
+    navigate(`/jobs${params.toString() ? `?${params}` : ""}`);
+  };
+
+  const categories = meta?.categories?.slice(0, 8) || [];
 
   return (
     <>
-      {/* HERO SECTION */}
-      <div className="hero-section text-center text-white d-flex align-items-center">
+      {/* ---------- Hero ---------- */}
+      <section className="hero">
         <div className="container">
-          <h1 className="display-4 fw-bold">
-            Find Blue Collar Jobs in Dubai
-          </h1>
-          <p className="lead">Search thousands of jobs across UAE</p>
+          <div className="row align-items-stretch g-4">
+            <div className="col-lg-6 d-flex flex-column justify-content-center">
+              <h1>Find work in the UAE this week</h1>
+              <p className="lead">
+                Driver, technician, cleaner, security and delivery jobs from employers in Dubai and across the Emirates. Salary shown on every job.
+              </p>
 
-          {/* SEARCH FORM */}
-          <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
-            <div className="row g-3 bg-white p-4 rounded shadow mt-4">
-              <div className="col-md-4">
-                <input
-                  className="form-control"
-                  placeholder="Job Title e.g. Driver"
-                  value={jobTitle}
-                  onChange={(e) => setJobTitle(e.target.value)}
-                />
-              </div>
-              <div className="col-md-4">
-                <input
-                  className="form-control"
-                  placeholder="Location e.g. Dubai"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
-              </div>
-              <div className="col-md-4">
-                <button className="btn btn-primary w-100 fw-bold">
-                  🔍 Search Jobs
-                </button>
-              </div>
-            </div>
-          </form>
-
-        </div>
-      </div>
-
-      {/* STATS */}
-      <div className="container mt-5 text-center">
-        <div className="row">
-          <div className="col-md-4">
-            <h2 className="fw-bold text-primary">{allJobs.length}+</h2>
-            <p className="text-muted">Jobs Available</p>
-          </div>
-          <div className="col-md-4">
-            <h2 className="fw-bold text-success">500+</h2>
-            <p className="text-muted">Companies</p>
-          </div>
-          <div className="col-md-4">
-            <h2 className="fw-bold text-warning">2000+</h2>
-            <p className="text-muted">Candidates</p>
-          </div>
-        </div>
-      </div>
-
-      {/* CATEGORIES */}
-      <div className="container mt-5">
-        <h3 className="text-center mb-4">Popular Job Categories</h3>
-        <div className="row g-4">
-          {categories.map((cat, index) => (
-            <JobCategory key={index} title={cat.title} jobs={cat.jobs} />
-          ))}
-        </div>
-      </div>
-
-      {/* LOCATIONS */}
-      <div className="container mt-5">
-        <h2 className="text-center fw-bold mb-5">Find Jobs by Location</h2>
-        <div className="row g-3">
-          {[
-            { code: "ae", name: "UAE",          count: "2,000+" },
-            { code: "sa", name: "Saudi Arabia", count: "4,867"  },
-            { code: "qa", name: "Qatar",        count: "1,228"  },
-            { code: "kw", name: "Kuwait",       count: "498"    },
-            { code: "om", name: "Oman",         count: "373"    },
-            { code: "bh", name: "Bahrain",      count: "255"    },
-            { code: "eg", name: "Egypt",        count: "3,680"  },
-          ].map((country) => (
-            <div className="col-md-3" key={country.code}>
-              <div className="card p-3 h-100 border-0 shadow-sm">
-                <div className="d-flex align-items-center">
-                  <img
-                    src={`https://flagcdn.com/w80/${country.code}.png`}
-                    alt={country.name}
-                    width="50"
+              <form className="hero-search" onSubmit={handleSearch} role="search">
+                <div className="input-icon">
+                  <FaSearch aria-hidden="true" />
+                  <input
+                    className="form-control"
+                    placeholder="Job title, e.g. Driver"
+                    aria-label="Job title or keyword"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
                   />
-                  <div className="ms-3">
-                    <h5 className="mb-0">{country.name}</h5>
-                    <small className="text-muted">({country.count})</small>
-                  </div>
                 </div>
+                <div className="input-icon">
+                  <FaMapMarkerAlt aria-hidden="true" />
+                  <select className="form-select" aria-label="Emirate" value={location} onChange={(e) => setLocation(e.target.value)}>
+                    <option value="">All emirates</option>
+                    {EMIRATES.map((e) => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                </div>
+                <button className="btn btn-primary" type="submit">Search</button>
+              </form>
+
+              <div className="hero-quick">
+                Popular:
+                {["Driver", "Security", "Cleaning", "Delivery"].map((c) => (
+                  <Link key={c} to={`/jobs?category=${c}`}>{c}</Link>
+                ))}
               </div>
+
+              {meta && (
+                <div className="hero-stats">
+                  <div><strong>{meta.total}</strong><span>open jobs</span></div>
+                  <div><strong>{meta.companies}</strong><span>employers</span></div>
+                  <div><strong>{meta.locations?.length || 0}</strong><span>emirates hiring</span></div>
+                </div>
+              )}
             </div>
-          ))}
-          <div className="col-md-3">
-            <div className="card p-3 h-100 border-0 shadow-sm bg-success text-white d-flex justify-content-center align-items-center" style={{ cursor: "pointer" }}>
-              <h5 className="mb-0">More Countries →</h5>
+
+            <div className="col-lg-6">
+              <div className="hero-photos">
+                <figure><img src={construction} alt="Construction workers on a Dubai site at sunset" /><figcaption>Construction</figcaption></figure>
+                <figure><img src={delivery} alt="Delivery rider on a motorbike in Dubai" /><figcaption>Delivery</figcaption></figure>
+                <figure><img src={warehouse} alt="Warehouse staff and forklift operator" /><figcaption>Warehouse</figcaption></figure>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* SEARCH RESULTS / ALL JOBS */}
-      <div className="container mt-5 mb-5">
-        <h3 className="text-center mb-4">
-          {searched ? "Search Results" : "Latest Jobs"}
-        </h3>
+      {/* ---------- Categories ---------- */}
+      {categories.length > 0 && (
+        <section className="section pb-0">
+          <div className="container">
+            <div className="section-head">
+              <div>
+                <h2>Browse by trade</h2>
+                <p>Pick your line of work to see every opening.</p>
+              </div>
+              <Link to="/jobs" className="btn btn-light-line">All jobs</Link>
+            </div>
+            <div className="cat-grid">
+              {categories.map((c) => <JobCategory key={c.name} title={c.name} jobs={c.count} />)}
+            </div>
+          </div>
+        </section>
+      )}
 
-        {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status" />
-            <p className="mt-2 text-muted">Loading jobs...</p>
+      {/* ---------- Latest jobs ---------- */}
+      <section className="section">
+        <div className="container">
+          <div className="section-head">
+            <div>
+              <h2>Latest jobs</h2>
+              <p>Newest openings first. Save the ones you like and apply when you're ready.</p>
+            </div>
+            <Link to="/jobs" className="btn btn-primary">See all jobs</Link>
           </div>
-        ) : filteredJobs.length > 0 ? (
-          <div className="row g-4">
-            {filteredJobs.map((job) => (
-              <JobCard key={job._id} {...job} />
-            ))}
+
+          {loading ? (
+            <JobRowSkeleton count={4} />
+          ) : failed ? (
+            <EmptyState title="Jobs couldn't load" action={<button className="btn btn-primary" onClick={() => window.location.reload()}>Reload page</button>}>
+              The server may be waking up after a quiet period. This usually takes under a minute.
+            </EmptyState>
+          ) : jobs.length ? (
+            <div className="job-list">
+              {jobs.map((job) => <JobCard key={job._id} {...job} />)}
+            </div>
+          ) : (
+            <EmptyState title="No jobs posted yet">New openings appear here as soon as employers post them.</EmptyState>
+          )}
+        </div>
+      </section>
+
+      {/* ---------- How it works (a real sequence, so it's numbered) ---------- */}
+      <section className="section pt-0">
+        <div className="container">
+          <h2 className="mb-4">Get hired in three steps</h2>
+          <div className="steps">
+            <div>
+              <span className="n">1</span>
+              <h3>Create a free account</h3>
+              <p>Just your name, email and phone number. No fees, ever.</p>
+            </div>
+            <div>
+              <span className="n">2</span>
+              <h3>Apply in one minute</h3>
+              <p>Pick a job, tell the employer when you can start, and send your application.</p>
+            </div>
+            <div>
+              <span className="n">3</span>
+              <h3>Track your status</h3>
+              <p>See when your application is reviewed, shortlisted or accepted on your dashboard.</p>
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-5">
-            <p className="text-muted">🔍 No jobs found. Try different keywords.</p>
-            <button
-              className="btn btn-outline-primary"
-              onClick={() => {
-                setJobTitle("");
-                setLocation("");
-                setFilteredJobs(allJobs);
-                setSearched(false);
-              }}
-            >
-              Clear Search
-            </button>
+        </div>
+      </section>
+
+      {/* ---------- Employers ---------- */}
+      <section className="pb-2">
+        <div className="container">
+          <div className="employer-band">
+            <div>
+              <h2>Hiring workers?</h2>
+              <p>Tell us about the role and we'll post it for you and send you applicants with phone numbers ready to call.</p>
+            </div>
+            <Link to="/contact?subject=Post%20a%20job" className="btn btn-lg" style={{ background: "#fff", color: "var(--navy)" }}>
+              Post a job
+            </Link>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
     </>
   );
 }
 
 export default Home;
-
-
-// import React, { useState, useEffect } from "react";
-// import JobCategory from "../components/JobCategory";
-// import JobCard from "../components/Jobcard";
-// import { getJobs } from "../service/api";
-
-// function Home() {
-
-//   const categories = [
-//     { title: "Driver",       jobs: 120 },
-//     { title: "Construction", jobs: 80  },
-//     { title: "Cleaning",     jobs: 60  },
-//     { title: "Technician",   jobs: 50  },
-//     { title: "Delivery",     jobs: 40  },
-//     { title: "Security",     jobs: 35  },
-//     { title: "Plumber",      jobs: 60  },
-//     { title: "Electrician",  jobs: 40  }
-//   ];
-
-//   const [jobTitle, setJobTitle]         = useState("");
-//   const [location, setLocation]         = useState("");
-//   const [allJobs, setAllJobs]           = useState([]);
-//   const [filteredJobs, setFilteredJobs] = useState([]);
-//   const [loading, setLoading]           = useState(true);
-//   const [searched, setSearched]         = useState(false);
-
-//   // ✅ Fetch jobs from backend on page load
-//   useEffect(() => {
-//     const fetchJobs = async () => {
-//       try {
-//         const { data } = await getJobs();
-
-//         // ✅ DEBUG — shows first job fields on page
-//         console.log("First job from backend:", data[0]);
-
-//         setAllJobs(data);
-//         setFilteredJobs(data);
-//       } catch (err) {
-//         console.log("Error fetching jobs:", err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchJobs();
-//   }, []);
-
-//   const handleSearch = async () => {
-//     setSearched(true);
-//     try {
-//       setLoading(true);
-//       const { data } = await getJobs({
-//         search:   jobTitle,
-//         location: location
-//       });
-//       setFilteredJobs(data);
-//     } catch (err) {
-//       console.log("Search error:", err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <>
-//       {/* HERO SECTION */}
-//       <div className="hero-section text-center text-white d-flex align-items-center">
-//         <div className="container">
-//           <h1 className="display-4 fw-bold">
-//             Find Blue Collar Jobs in Dubai
-//           </h1>
-//           <p className="lead">Search thousands of jobs across UAE</p>
-
-//           <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
-//             <div className="row g-3 bg-white p-4 rounded shadow mt-4">
-//               <div className="col-md-4">
-//                 <input
-//                   className="form-control"
-//                   placeholder="Job Title e.g. Driver"
-//                   value={jobTitle}
-//                   onChange={(e) => setJobTitle(e.target.value)}
-//                 />
-//               </div>
-//               <div className="col-md-4">
-//                 <input
-//                   className="form-control"
-//                   placeholder="Location e.g. Dubai"
-//                   value={location}
-//                   onChange={(e) => setLocation(e.target.value)}
-//                 />
-//               </div>
-//               <div className="col-md-4">
-//                 <button className="btn btn-primary w-100 fw-bold">
-//                   🔍 Search Jobs
-//                 </button>
-//               </div>
-//             </div>
-//           </form>
-//         </div>
-//       </div>
-
-//       {/* STATS */}
-//       <div className="container mt-5 text-center">
-//         <div className="row">
-//           <div className="col-md-4">
-//             <h2 className="fw-bold text-primary">{allJobs.length}+</h2>
-//             <p className="text-muted">Jobs Available</p>
-//           </div>
-//           <div className="col-md-4">
-//             <h2 className="fw-bold text-success">500+</h2>
-//             <p className="text-muted">Companies</p>
-//           </div>
-//           <div className="col-md-4">
-//             <h2 className="fw-bold text-warning">2000+</h2>
-//             <p className="text-muted">Candidates</p>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* CATEGORIES */}
-//       <div className="container mt-5">
-//         <h3 className="text-center mb-4">Popular Job Categories</h3>
-//         <div className="row g-4">
-//           {categories.map((cat, index) => (
-//             <JobCategory key={index} title={cat.title} jobs={cat.jobs} />
-//           ))}
-//         </div>
-//       </div>
-
-//       {/* LOCATIONS */}
-//       <div className="container mt-5">
-//         <h2 className="text-center fw-bold mb-5">Find Jobs by Location</h2>
-//         <div className="row g-3">
-//           {[
-//             { code: "ae", name: "UAE",          count: "2,000+" },
-//             { code: "sa", name: "Saudi Arabia", count: "4,867"  },
-//             { code: "qa", name: "Qatar",        count: "1,228"  },
-//             { code: "kw", name: "Kuwait",       count: "498"    },
-//             { code: "om", name: "Oman",         count: "373"    },
-//             { code: "bh", name: "Bahrain",      count: "255"    },
-//             { code: "eg", name: "Egypt",        count: "3,680"  },
-//           ].map((country) => (
-//             <div className="col-md-3" key={country.code}>
-//               <div className="card p-3 h-100 border-0 shadow-sm">
-//                 <div className="d-flex align-items-center">
-//                   <img
-//                     src={`https://flagcdn.com/w80/${country.code}.png`}
-//                     alt={country.name}
-//                     width="50"
-//                   />
-//                   <div className="ms-3">
-//                     <h5 className="mb-0">{country.name}</h5>
-//                     <small className="text-muted">({country.count})</small>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           ))}
-//           <div className="col-md-3">
-//             <div
-//               className="card p-3 h-100 border-0 shadow-sm bg-success text-white d-flex justify-content-center align-items-center"
-//               style={{ cursor: "pointer" }}
-//             >
-//               <h5 className="mb-0">More Countries →</h5>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* ✅ DEBUG BOX — shows on webpage, no F12 needed */}
-//       {filteredJobs[0] && (
-//         <div className="container mt-3">
-//           <div className="alert alert-info text-center">
-//             <strong>Debug:</strong> First job →
-//             Title: <b>{filteredJobs[0].title}</b> |
-//             Company: <b>{filteredJobs[0].companyName || "MISSING"}</b> |
-//             Logo: <b>{filteredJobs[0].logo || "MISSING"}</b>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* JOBS SECTION */}
-//       <div className="container mt-5 mb-5">
-//         <h3 className="text-center mb-4">
-//           {searched ? "Search Results" : "Latest Jobs"}
-//         </h3>
-
-//         {loading ? (
-//           <div className="text-center py-5">
-//             <div className="spinner-border text-primary" role="status" />
-//             <p className="mt-2 text-muted">Loading jobs...</p>
-//           </div>
-//         ) : filteredJobs.length > 0 ? (
-//           <div className="row g-4">
-//             {filteredJobs.map((job) => (
-//               <JobCard key={job._id} {...job} />
-//             ))}
-//           </div>
-//         ) : (
-//           <div className="text-center py-5">
-//             <p className="text-muted">🔍 No jobs found. Try different keywords.</p>
-//             <button
-//               className="btn btn-outline-primary"
-//               onClick={() => {
-//                 setJobTitle("");
-//                 setLocation("");
-//                 setFilteredJobs(allJobs);
-//                 setSearched(false);
-//               }}
-//             >
-//               Clear Search
-//             </button>
-//           </div>
-//         )}
-//       </div>
-//     </>
-//   );
-// }
-
-// export default Home;

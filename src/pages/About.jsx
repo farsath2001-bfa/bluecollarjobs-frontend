@@ -1,123 +1,69 @@
-
-// import React from "react";
-
-// function About() {
-//   return (
-//     <div className="container py-5">
-//       <h1>About Jobz Dxb</h1>
-
-//       <p>
-//         Jobz Dxb connects blue-collar workers with trusted employers
-//         across Dubai and the UAE.
-//       </p>
-
-//       <h3>Our Mission</h3>
-//       <p>
-//         To make job searching simple, fast, and accessible for workers
-//         and companies.
-//       </p>
-
-//       <h3>Why Choose Us?</h3>
-//       <ul>
-//         <li>Verified Job Listings</li>
-//         <li>Trusted Employers</li>
-//         <li>Easy Applications</li>
-//         <li>Fast Hiring Process</li>
-//       </ul>
-//     </div>
-//   );
-// }
-
-// export default About;  
-
 import React from "react";
+import { Link } from "react-router-dom";
+import { FaMoneyBillWave, FaPhoneAlt, FaShieldAlt, FaHandHoldingUsd } from "react-icons/fa";
+import { PageHead } from "../components/ui";
+import { useTitle } from "../utils/useTitle";
+import delivery from "../assets/Images/hero-delivery.jpg";
+
+const promises = [
+  { icon: FaMoneyBillWave, title: "Salary on every job", text: "We ask every employer for the monthly pay and what's included — accommodation, transport, visa — before a job goes live." },
+  { icon: FaHandHoldingUsd, title: "Free for workers", text: "You never pay to apply or to get hired. Anyone asking for money for a job or visa is not working with us." },
+  { icon: FaPhoneAlt, title: "Employers call you", text: "Your application goes out with your phone number, so the next step is a real conversation." },
+  { icon: FaShieldAlt, title: "Checked employers", text: "Companies marked as verified have been confirmed by our team. Report anything that looks wrong and we'll look into it." },
+];
 
 function About() {
+  useTitle("About us");
   return (
-    <div style={{ backgroundColor: "#f4f6f9", minHeight: "100vh" }}>
+    <>
+      <PageHead title="About Jobz Dxb">A job board built for the people who build, drive, clean and guard the UAE.</PageHead>
 
-      {/* Hero Banner */}
-      <div style={{ backgroundColor: "#5a7296", padding: "60px 0" }}
-        className="text-white text-center mb-5">
-        <h1 className="fw-bold">About Jobz Dxb</h1>
-        <p className="lead">Connecting talent with opportunity across the UAE</p>
-      </div>
-
-      <div className="container pb-5">
-        <div className="row justify-content-center">
-          <div className="col-md-9">
-
-            {/* Intro */}
-            <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: "16px" }}>
-              <p className="text-muted" style={{ lineHeight: "1.8", fontSize: "1.05rem" }}>
-                Jobz Dxb connects blue-collar workers with trusted employers
-                across Dubai and the UAE. We believe everyone deserves access
-                to fair, reliable job opportunities — no matter their background.
+      <section className="section-tight">
+        <div className="container">
+          <div className="row g-4 align-items-center">
+            <div className="col-lg-7">
+              <h2 className="mb-3">Why we started</h2>
+              <p className="lead text-body mb-3">
+                Finding a blue-collar job in the UAE usually means WhatsApp forwards, agents and listings with no salary. We wanted one place where the pay is shown upfront and applying takes a minute.
+              </p>
+              <p className="text-steel measure mb-0">
+                Jobz Dxb lists openings for drivers, electricians, plumbers, AC technicians, cleaners, security guards, delivery riders, warehouse staff and construction workers across all seven emirates. Employers post jobs, you apply with your phone number, and you can follow every application from your dashboard.
               </p>
             </div>
-
-            {/* Mission */}
-            <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: "16px" }}>
-              <h3 className="fw-bold mb-3">🎯 Our Mission</h3>
-              <p className="text-muted" style={{ lineHeight: "1.8" }}>
-                To make job searching simple, fast, and accessible for
-                workers and companies — bridging the gap between skilled
-                workers and the businesses that need them most.
-              </p>
+            <div className="col-lg-5">
+              <img src={delivery} alt="A delivery rider in Dubai" className="w-100" style={{ borderRadius: "var(--radius)", maxHeight: 380, objectFit: "cover" }} />
             </div>
-
-            {/* Why Choose Us */}
-            <div className="card border-0 shadow-sm p-4" style={{ borderRadius: "16px" }}>
-              <h3 className="fw-bold mb-4">⭐ Why Choose Us?</h3>
-              <div className="row g-3">
-
-                <div className="col-md-6">
-                  <div className="d-flex align-items-center p-3 bg-light rounded">
-                    <span className="fs-4 me-3">✅</span>
-                    <div>
-                      <strong>Verified Job Listings</strong>
-                      <p className="text-muted small mb-0">Every job is checked before posting</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-md-6">
-                  <div className="d-flex align-items-center p-3 bg-light rounded">
-                    <span className="fs-4 me-3">🤝</span>
-                    <div>
-                      <strong>Trusted Employers</strong>
-                      <p className="text-muted small mb-0">Companies we know and vet</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-md-6">
-                  <div className="d-flex align-items-center p-3 bg-light rounded">
-                    <span className="fs-4 me-3">⚡</span>
-                    <div>
-                      <strong>Easy Applications</strong>
-                      <p className="text-muted small mb-0">Apply in just a few clicks</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-md-6">
-                  <div className="d-flex align-items-center p-3 bg-light rounded">
-                    <span className="fs-4 me-3">🚀</span>
-                    <div>
-                      <strong>Fast Hiring Process</strong>
-                      <p className="text-muted small mb-0">Get hired quickly</p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <h2 className="mb-4">What we promise</h2>
+          <div className="row g-3">
+            {promises.map(({ icon, title, text }) => (
+              <div className="col-md-6" key={title}>
+                <div className="panel h-100 d-flex gap-3">
+                  <span className="cat-tile p-0 border-0" style={{ background: "none" }}><span className="ico">{React.createElement(icon)}</span></span>
+                  <div>
+                    <h3 className="h4 mb-1">{title}</h3>
+                    <p className="text-steel mb-0">{text}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="employer-band mt-5">
+            <div>
+              <h2>Ready to look?</h2>
+              <p>New jobs are added every week across Dubai, Abu Dhabi, Sharjah and the northern emirates.</p>
+            </div>
+            <Link to="/jobs" className="btn btn-lg" style={{ background: "#fff", color: "var(--navy)" }}>Find jobs</Link>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 

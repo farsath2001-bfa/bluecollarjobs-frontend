@@ -1,242 +1,184 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
-// import { useParams } from "react-router-dom";
-// import { getJobById } from "../../service/api";
-
-// function JobDetails(){
-
-//     const {id}= useParams();
-//     const jobs= [
-//         {
-//             id :1,
-//              title:"Driver",
-//           company:"Emirates Transport",
-//           location:"Dubai",
-//           salary:"AED 2500",
-//           description: "Delivery food to customers across Dubai."
-//         },
-//         {
-//             id:2,
-//              title:"Electrician",
-//           company:"Al Noor Technical Services",
-//           location:"Sharjah",
-//           salary:"AED 3000",
-//           description:"Construction and maintenance jobs."
-//         },
-//         {
-//             id:4,
-//             title:"Plumber",
-//             company:"Lazord Plumbing Agencies",
-//             salary:"2000",
-//             location:"Sharjah",
-//             description:"Residential and commercial plumbing."
-//         },
-//         {
-//             id:3,
-//             title:"cleaner",
-//             company:"AlMas Cleaning Services",
-//             location:"Ajman",
-//             salary:"1600",
-//             description:"Office, home, and building cleaning."
-//         },
-//         {
-//             id:5,
-//             title:"Delivery Rider",
-//             company:"Talabat",
-//             location:"Dubai",
-//             salary:"2500+ Commisssion",
-//             description:"Food and parcel delivery jobs."
-//         },
-//          {
-//             id:6,
-//             title:"IT Technical support",
-//             company:"Google",
-//             location:"Dubai",
-//             salary:"4500",
-//             description:"We Create IT Future."
-//         },
-//         {
-//             id:7,
-//             title:"Driver",
-//             company:"EAS",
-//             location:"Dubai",
-//             salary:"3500",
-//             description:"Delivery Documents to customers across Dubai."  
-//         },
-//          {
-//             id:8,
-//             title:"Recepitionist",
-//             company:"ABC Cargo",
-//             location:"Umm al Quain",
-//             salary:"2400 + Accomodation",
-//             description:"We Create IT Future and Keep Learning."
-//         }
-
-
-//     ];
-
-//    const job = jobs.find((j) =>j.id === parseInt(id));
-//     // const job=jobs.find((j)=>j.id=== parseInt(id));
-
-//     if (!job) {
-//     return (
-//       <div className="container mt-5">
-//         <h3>Job not found</h3>
-//       </div>
-//     );
-//   }
-
-//     return(
-//         <div className="container text-center  ">
-//             <h2>{job.title}</h2>
-//             <p><strong>Company:</strong> {job.company}</p>
-//             <p><strong>Location:</strong>{job.location}</p>
-//             <p><strong>Salary:</strong>{job.salary}</p>
-//             <p className="mt-3">{job.description} </p>
-
-//             {/* <button className="btn btn-success mt-3">Apply Now</button> */}
-//             <Link to={`/apply/${job.id}`} className="btn btn-success mt-3">
-//             Apply Now
-//             </Link>
-            
-
-//         </div>
-//     );
-// }
-// export default JobDetails;
-
-
-import React, { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { getJobById } from "../../service/api";
-import { FaMapMarkerAlt, FaMoneyBill, FaBriefcase, FaArrowLeft } from "react-icons/fa";
-
-import abcLogo      from "../../assets/CompanyLogos/abc.png";
-import alnoorLogo   from "../../assets/CompanyLogos/alnoor.png";
-import brightLogo   from "../../assets/CompanyLogos/bright.png";
-import dewaLogo     from "../../assets/CompanyLogos/dewa.png";
-import easLogo      from "../../assets/CompanyLogos/eas.png";
-import emiratesLogo from "../../assets/CompanyLogos/emirates.png";
-import lazordLogo   from "../../assets/CompanyLogos/lazord.png";
-import talabatLogo  from "../../assets/CompanyLogos/talabat.png";
-
-const logoMap = {
-  "abc.png":      abcLogo,
-  "alnoor.png":   alnoorLogo,
-  "bright.png":   brightLogo,
-  "dewa.png":     dewaLogo,
-  "eas.png":      easLogo,
-  "emirates.png": emiratesLogo,
-  "lazord.png":   lazordLogo,
-  "talabat.png":  talabatLogo,
-};
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { FaArrowLeft, FaMapMarkerAlt, FaBookmark, FaRegBookmark, FaCheckCircle, FaShareAlt, FaUsers, FaCheck } from "react-icons/fa";
+import { CompanyLogo, EmptyState, Spinner } from "../../components/ui";
+import { useTitle } from "../../utils/useTitle";
+import JobCard from "../../components/JobCard";
+import { getJobById, getMyApplications, errorMessage } from "../../service/api";
+import { useAuth } from "../../context/AuthContext";
+import { useSavedJobs } from "../../context/SavedJobsContext";
+import { useToast } from "../../context/ToastContext";
+import { formatSalary, timeAgo, formatDate } from "../../utils/format";
 
 function JobDetails() {
-  const { id }       = useParams();
-  const navigate     = useNavigate();
-  const [job, setJob]         = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState("");
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
+  const { isSaved, toggleSave } = useSavedJobs();
+  const toast = useToast();
+  // Result is stored with the id it belongs to, so changing jobs shows the loader again
+  const [result, setResult] = useState({ id: null, job: null, error: "" });
+  const loading = result.id !== id;
+  const { job, error } = loading ? { job: null, error: "" } : result;
+  const [application, setApplication] = useState(null);
+
+  useTitle(job ? `${job.title} at ${job.companyName}` : "Job");
 
   useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        const { data } = await getJobById(id);
-        setJob(data);
-      } catch (err) {
-        setError("Job not found");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJob();
+    getJobById(id)
+      .then(({ data }) => setResult({ id, job: data, error: "" }))
+      .catch((err) => setResult({ id, job: null, error: errorMessage(err, "This job is no longer available") }));
   }, [id]);
 
-  if (loading) return (
-    <div className="text-center py-5">
-      <div className="spinner-border text-primary" role="status" />
-      <p className="mt-2">Loading job details...</p>
-    </div>
-  );
+  // Has this candidate already applied?
+  useEffect(() => {
+    if (!user || isAdmin) return;
+    getMyApplications()
+      .then(({ data }) => setApplication(data.find((a) => (a.job?._id || a.job) === id) || null))
+      .catch(() => {});
+  }, [id, user, isAdmin]);
 
-  if (error || !job) return (
-    <div className="container mt-5 text-center">
-      <h3>Job not found</h3>
-      <button className="btn btn-primary mt-3" onClick={() => navigate("/jobs")}>
-        Back to Jobs
-      </button>
-    </div>
-  );
+  const share = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: job.title, text: `${job.title} at ${job.companyName}`, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        toast("Link copied");
+      }
+    } catch {
+      /* share sheet closed */
+    }
+  };
 
-  const resolvedLogo = logoMap[job.logo] || emiratesLogo;
+  if (loading) return <Spinner label="Loading job…" />;
+
+  if (error || !job) {
+    return (
+      <div className="container section">
+        <EmptyState title="Job not found" action={<Link to="/jobs" className="btn btn-primary">Browse open jobs</Link>}>
+          {error || "It may have been filled or removed."}
+        </EmptyState>
+      </div>
+    );
+  }
+
+  const pay = formatSalary(job.salary);
+  const saved = isSaved(job._id);
+  const company = typeof job.company === "object" ? job.company : null;
+
+  const applyArea = isAdmin ? (
+    <Link to="/admin/jobs" className="btn btn-primary btn-lg w-100">Edit in admin</Link>
+  ) : application ? (
+    <div className="text-center">
+      <div className="chip chip-pay mb-2"><FaCheckCircle /> Applied {timeAgo(application.createdAt).toLowerCase()}</div>
+      <Link to="/applied" className="btn btn-light-line w-100">Track my application</Link>
+    </div>
+  ) : !job.isActive ? (
+    <div className="chip">This job is closed</div>
+  ) : (
+    <Link to={user ? `/apply/${job._id}` : "/login"} state={user ? undefined : { from: `/apply/${job._id}` }} className="btn btn-primary btn-lg w-100">
+      Apply now
+    </Link>
+  );
 
   return (
-    <div className="container my-5">
-      <div className="row justify-content-center">
-        <div className="col-md-8">
+    <div className="container section-tight">
+      <button type="button" className="btn btn-ghost mb-3 ps-0" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/jobs"))}>
+        <FaArrowLeft /> Back to jobs
+      </button>
 
-          {/* Back Button */}
-          <button
-            className="btn btn-outline-secondary mb-4"
-            onClick={() => navigate("/jobs")}
-          >
-            <FaArrowLeft className="me-2" />
-            Back to Jobs
-          </button>
-
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: "16px" }}>
-
-            {/* Company Logo + Name */}
-            <div className="text-center mb-4">
-              <img
-                src={resolvedLogo}
-                alt={job.companyName}
-                style={{ width: "100px", height: "100px", objectFit: "contain" }}
-              />
-              <h5 className="mt-2 text-muted">{job.companyName}</h5>
+      <div className="row g-4">
+        <div className="col-lg-8">
+          <div className="panel mb-4">
+            <div className="detail-head mb-4">
+              <CompanyLogo logo={job.logo} name={job.companyName} size="lg" />
+              <div className="min-w-0">
+                <h1 style={{ fontSize: "clamp(1.9rem, 4vw, 2.7rem)" }} className="mb-2">{job.title}</h1>
+                <div className="text-steel">
+                  {company ? <Link to={`/company/${company._id}`} className="fw-semibold">{job.companyName}</Link> : <span className="fw-semibold">{job.companyName}</span>}
+                  {" in "}
+                  <FaMapMarkerAlt aria-hidden="true" className="ms-1" /> {job.location}
+                </div>
+                <div className="d-flex flex-wrap gap-2 mt-3">
+                  <span className="chip chip-blue">{job.category}</span>
+                  <span className="chip">{job.jobType}</span>
+                  <span className="chip">Posted {timeAgo(job.createdAt).toLowerCase()}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Job Title */}
-            <h2 className="fw-bold text-center mb-4">{job.title}</h2>
-
-            {/* Job Info Badges */}
-            <div className="d-flex flex-wrap justify-content-center gap-3 mb-4">
-              <span className="badge bg-light text-dark border px-3 py-2">
-                <FaMapMarkerAlt className="me-1 text-danger" />
-                {job.location}
-              </span>
-              <span className="badge bg-light text-dark border px-3 py-2">
-                <FaMoneyBill className="me-1 text-success" />
-                {job.salary || "Salary not specified"}
-              </span>
-              <span className="badge bg-light text-dark border px-3 py-2">
-                <FaBriefcase className="me-1 text-primary" />
-                {job.jobType}
-              </span>
-              <span className="badge bg-primary text-white px-3 py-2">
-                {job.category}
-              </span>
+            <div className="detail-facts mb-4">
+              <div><small>Salary</small><strong className={pay ? "text-success" : ""}>{pay || "Discussed at interview"}</strong></div>
+              <div><small>Job type</small><strong>{job.jobType}</strong></div>
+              <div><small>Location</small><strong>{job.location}</strong></div>
+              <div><small>Openings</small><strong>{job.vacancies || 1}</strong></div>
             </div>
 
-            {/* Description */}
-            <div className="mb-4">
-              <h5 className="fw-bold mb-2">Job Description</h5>
-              <p className="text-muted" style={{ lineHeight: "1.8" }}>
-                {job.description}
-              </p>
-            </div>
+            <h2 className="h4 mb-2">About the job</h2>
+            <p className="prose measure">{job.description}</p>
 
-            {/* Apply Button */}
-            <Link
-              to={`/apply/${job._id}`}
-              className="btn btn-success btn-lg w-100 fw-bold"
-            >
-              Apply Now
-            </Link>
+            {job.requirements?.length > 0 && (
+              <>
+                <h2 className="h4 mt-4 mb-2">What you need</h2>
+                <ul className="tick-list">{job.requirements.map((r) => <li key={r}>{r}</li>)}</ul>
+              </>
+            )}
 
+            {job.benefits?.length > 0 && (
+              <>
+                <h2 className="h4 mt-4 mb-2">What the employer provides</h2>
+                <div className="d-flex flex-wrap gap-2">
+                  {job.benefits.map((b) => <span key={b} className="chip chip-pay"><FaCheck aria-hidden="true" /> {b}</span>)}
+                </div>
+              </>
+            )}
           </div>
+
+          {company && (
+            <div className="panel mb-4">
+              <div className="d-flex gap-3 align-items-center mb-2">
+                <CompanyLogo logo={company.logo} name={company.name} size="sm" />
+                <div>
+                  <h2 className="h4 mb-0">{company.name}</h2>
+                  <small className="text-steel">{[company.industry, company.location].filter(Boolean).join(", ")}</small>
+                </div>
+              </div>
+              {company.description && <p className="text-steel mb-2 measure">{company.description}</p>}
+              <Link to={`/company/${company._id}`} className="fw-semibold">See all jobs at {company.name}</Link>
+            </div>
+          )}
         </div>
+
+        <aside className="col-lg-4">
+          <div className="panel apply-card">
+            <small className="text-steel">Monthly salary</small>
+            {pay ? <span className="salary mb-3">{pay}</span> : <p className="fw-semibold">Discussed at interview</p>}
+            {applyArea}
+            <div className="d-flex gap-2 mt-2">
+              {!isAdmin && (
+                <button type="button" className="btn btn-light-line flex-fill" onClick={() => toggleSave(job._id)} aria-pressed={saved}>
+                  {saved ? <><FaBookmark className="text-danger" /> Saved</> : <><FaRegBookmark /> Save</>}
+                </button>
+              )}
+              <button type="button" className="btn btn-light-line flex-fill" onClick={share}><FaShareAlt /> Share</button>
+            </div>
+            <hr />
+            <ul className="list-unstyled small text-steel mb-0">
+              {job.applicantsCount > 0 && <li className="mb-1"><FaUsers className="me-2" />{job.applicantsCount} {job.applicantsCount === 1 ? "person has" : "people have"} applied</li>}
+              <li>Posted {formatDate(job.createdAt)}</li>
+            </ul>
+            <p className="small text-steel mt-3 mb-0">Real employers never ask you to pay for a job or visa. <Link to="/contact">Report this job</Link></p>
+          </div>
+        </aside>
       </div>
+
+      {job.similar?.length > 0 && (
+        <section className="mt-5">
+          <h2 className="h3 mb-3">More {job.category} jobs</h2>
+          <div className="job-list">{job.similar.map((s) => <JobCard key={s._id} {...s} />)}</div>
+        </section>
+      )}
     </div>
   );
 }

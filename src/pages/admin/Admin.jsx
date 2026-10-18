@@ -1,174 +1,97 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
+import React from "react";
+import { Link } from "react-router-dom";
+import { FaPlus } from "react-icons/fa";
+import AdminShell from "./AdminShell";
+import { StatusBadge } from "../../components/ui";
+import { useTitle } from "../../utils/useTitle";
+import { timeAgo } from "../../utils/format";
 
-// function Admin() {
-//   return (
-//     <div className="container mt-5">
-
-//       <h2 className="text-center mb-4">Admin Dashboard</h2>
-
-//       <div className="card p-4 shadow-sm">
-
-//         <h5>Admin Controls</h5>
-
-//         <ul>
-//           <li>Manage Jobs</li>
-//           <li>Manage Users</li>
-//           <li>View Applications</li>
-//         </ul>
-//         <Link to="/admin/jobs" className="btn btn-primary">Manage Jobs</Link>
-
-//       </div>
-
-//     </div>
-//   );
-// }
-
-// export default Admin;
-
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { getJobs, getCompanies } from "../../service/api";
+const STATUS_ORDER = ["pending", "reviewed", "shortlisted", "accepted", "rejected"];
 
 function Admin() {
-  const [stats, setStats] = useState({ jobs: 0, companies: 0 });
-  const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [jobsRes, companiesRes] = await Promise.all([
-          getJobs(),
-          getCompanies()
-        ]);
-        setStats({
-          jobs: jobsRes.data.length,
-          companies: companiesRes.data.length
-        });
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    fetchStats();
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("role");
-    navigate("/login");
-  };
+  useTitle("Admin");
 
   return (
-    <div style={{ backgroundColor: "#f4f6f9", minHeight: "100vh", padding: "30px" }}>
-
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="fw-bold mb-0">Admin Dashboard</h2>
-          <p className="text-muted mb-0">Welcome back, {user?.name} 👋</p>
-        </div>
-        <button className="btn btn-outline-danger" onClick={handleLogout}>
-          Logout
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="row g-4 mb-4">
-
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3" style={{ borderLeft: "4px solid #0d6efd", borderRadius: "12px" }}>
-            <p className="text-muted mb-1 small">Total Jobs</p>
-            <h3 className="fw-bold text-primary">{stats.jobs}</h3>
-            <p className="text-muted small mb-0">Active listings</p>
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3" style={{ borderLeft: "4px solid #198754", borderRadius: "12px" }}>
-            <p className="text-muted mb-1 small">Companies</p>
-            <h3 className="fw-bold text-success">{stats.companies}</h3>
-            <p className="text-muted small mb-0">Registered</p>
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3" style={{ borderLeft: "4px solid #ffc107", borderRadius: "12px" }}>
-            <p className="text-muted mb-1 small">Applications</p>
-            <h3 className="fw-bold text-warning">--</h3>
-            <p className="text-muted small mb-0">Total received</p>
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3" style={{ borderLeft: "4px solid #dc3545", borderRadius: "12px" }}>
-            <p className="text-muted mb-1 small">Users</p>
-            <h3 className="fw-bold text-danger">--</h3>
-            <p className="text-muted small mb-0">Registered</p>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Quick Actions */}
-      <div className="row g-4">
-
-        <div className="col-md-4">
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: "12px" }}>
-            <div className="d-flex align-items-center mb-3">
-              <div style={{ backgroundColor: "#e7f0ff", borderRadius: "10px", padding: "10px", marginRight: "15px" }}>
-                💼
+    <AdminShell title="Admin overview" actions={<Link to="/admin/jobs?new=1" className="btn btn-primary"><FaPlus /> Post a job</Link>}>
+      {(stats) =>
+        !stats ? (
+          <div className="row g-3">{Array.from({ length: 4 }).map((_, i) => <div className="col-6 col-lg-3" key={i}><div className="skel" style={{ height: 104 }} /></div>)}</div>
+        ) : (
+          <>
+            <div className="row g-3 mb-4">
+              <div className="col-6 col-lg-3">
+                <Link to="/admin/jobs" className="stat-tile">
+                  <span className="lbl">Open jobs</span><span className="num">{stats.activeJobs}</span>
+                  <span className="hint">{stats.jobs - stats.activeJobs} closed</span>
+                </Link>
               </div>
-              <h5 className="mb-0 fw-bold">Manage Jobs</h5>
-            </div>
-            <p className="text-muted small">Add, edit or remove job listings from the portal.</p>
-            <button
-              className="btn btn-primary w-100"
-              onClick={() => navigate("/admin/jobs")}
-            >
-              Go to Jobs
-            </button>
-          </div>
-        </div>
-
-        <div className="col-md-4">
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: "12px" }}>
-            <div className="d-flex align-items-center mb-3">
-              <div style={{ backgroundColor: "#e6f9f0", borderRadius: "10px", padding: "10px", marginRight: "15px" }}>
-                🏢
+              <div className="col-6 col-lg-3">
+                <Link to="/admin/applications" className="stat-tile">
+                  <span className="lbl">Applications</span><span className="num">{stats.applications}</span>
+                  <span className="hint">{stats.pendingApplications} waiting for review</span>
+                </Link>
               </div>
-              <h5 className="mb-0 fw-bold">Manage Companies</h5>
-            </div>
-            <p className="text-muted small">Add and manage company profiles and logos.</p>
-            <button
-              className="btn btn-success w-100"
-              onClick={() => navigate("/admin/companies")}
-            >
-              Go to Companies
-            </button>
-          </div>
-        </div>
-
-        <div className="col-md-4">
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: "12px" }}>
-            <div className="d-flex align-items-center mb-3">
-              <div style={{ backgroundColor: "#fff8e6", borderRadius: "10px", padding: "10px", marginRight: "15px" }}>
-                👥
+              <div className="col-6 col-lg-3">
+                <Link to="/admin/users" className="stat-tile">
+                  <span className="lbl">Job seekers</span><span className="num">{stats.users}</span>
+                  <span className="hint">registered accounts</span>
+                </Link>
               </div>
-              <h5 className="mb-0 fw-bold">View Applications</h5>
+              <div className="col-6 col-lg-3">
+                <Link to="/admin/companies" className="stat-tile">
+                  <span className="lbl">Companies</span><span className="num">{stats.companies}</span>
+                  <span className="hint">{stats.unreadMessages} unread {stats.unreadMessages === 1 ? "message" : "messages"}</span>
+                </Link>
+              </div>
             </div>
-            <p className="text-muted small">See all job applications submitted by users.</p>
-            <button
-              className="btn btn-warning w-100"
-              onClick={() => navigate("/admin/applications")}
-            >
-              View Applications
-            </button>
-          </div>
-        </div>
 
-      </div>
-    </div>
+            <div className="row g-4">
+              <div className="col-lg-8">
+                <div className="panel">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h2 className="h4 mb-0">Latest applications</h2>
+                    <Link to="/admin/applications" className="fw-semibold">Review all</Link>
+                  </div>
+                  {stats.recentApplications.length === 0 ? (
+                    <p className="text-steel mb-0">No applications yet. They'll show up here as candidates apply.</p>
+                  ) : (
+                    <ul className="list-unstyled mb-0">
+                      {stats.recentApplications.map((a) => (
+                        <li key={a._id} className="d-flex align-items-center gap-3 py-2 border-bottom">
+                          <div className="flex-grow-1 min-w-0">
+                            <strong>{a.applicant?.name || "Deleted user"}</strong>
+                            <span className="text-steel"> applied for </span>
+                            <strong>{a.job?.title || "a removed job"}</strong>
+                            <div className="small text-steel">{a.job?.companyName}, {timeAgo(a.createdAt).toLowerCase()}</div>
+                          </div>
+                          <StatusBadge status={a.status} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <div className="col-lg-4">
+                <div className="panel">
+                  <h2 className="h4 mb-3">Applications by status</h2>
+                  {STATUS_ORDER.map((s) => {
+                    const n = stats.applicationsByStatus?.[s] || 0;
+                    const pct = stats.applications ? Math.round((n / stats.applications) * 100) : 0;
+                    return (
+                      <Link to={`/admin/applications?status=${s}`} key={s} className="d-block text-reset mb-3">
+                        <div className="d-flex justify-content-between small mb-1"><StatusBadge status={s} /><strong>{n}</strong></div>
+                        <div className="progress-thin"><span style={{ width: `${pct}%`, background: "var(--navy-2)" }} /></div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
+        )
+      }
+    </AdminShell>
   );
 }
 

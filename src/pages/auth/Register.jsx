@@ -1,140 +1,115 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { registerUser } from "../../service/api";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { registerUser, errorMessage } from "../../service/api";
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import { useTitle } from "../../utils/useTitle";
+import sideImage from "../../assets/Images/hero-warehouse.jpg";
 
 function Register() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "jobseeker"
-  });
-  const [error, setError]     = useState("");
+  useTitle("Create account");
+  const { user, loginUser: saveSession } = useAuth();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const from = useLocation().state?.from;
+
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
+  if (user) return <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />;
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    if (!form.name || !form.email || !form.password || !form.role) {
-      setError("Please fill all fields");
+    if (!form.name.trim() || !form.email.trim() || !form.password) {
+      setError("Fill in your name, email and a password");
       return;
     }
-
+    if (form.password.length < 6) {
+      setError("Use a password with at least 6 characters");
+      return;
+    }
     try {
       setLoading(true);
       const { data } = await registerUser(form);
-
-      console.log("✅ Register success:", data);
-
-      localStorage.setItem("user", JSON.stringify(data));
-      localStorage.setItem("role", data.role);
-
-      if (data.role === "admin") navigate("/admin");
-      else navigate("/dashboard");
-
+      saveSession(data);
+      toast("Account created");
+      navigate(from || "/jobs", { replace: true });
     } catch (err) {
-      console.log("❌ Register error:", err.response);
-      setError(err.response?.data?.message || "Registration failed");
+      setError(errorMessage(err, "Your account couldn't be created. Try again."));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-7">
-          <div className="card shadow-sm p-4">
-            <h2 className="text-center mb-4">Register</h2>
+    <div className="auth-wrap">
+      <div className="auth-side" style={{ backgroundImage: `url(${sideImage})` }}>
+        <div>
+          <h2>Free for job seekers. Always.</h2>
+          <p>Create your account once, then apply to any job in under a minute.</p>
+        </div>
+      </div>
 
-            <form onSubmit={handleSubmit}>
+      <div className="auth-form">
+        <div>
+          <h1 className="h2 mb-1">Create your account</h1>
+          <p className="text-steel mb-4">
+            Already registered? <Link to="/login" state={{ from }} className="fw-semibold">Log in</Link>
+          </p>
 
-              {error && (
-                <div className="alert alert-danger py-2 text-center">
-                  {error}
-                </div>
-              )}
+          {error && <div className="alert alert-danger py-2" role="alert">{error}</div>}
 
-              <div className="mb-3">
-                <label className="form-label">Full Name</label>
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="name">Full name</label>
+              <input id="name" className="form-control" value={form.name} onChange={set("name")} autoComplete="name" required />
+            </div>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="email">Email</label>
+              <input id="email" type="email" className="form-control" placeholder="name@example.com" value={form.email} onChange={set("email")} autoComplete="email" required />
+            </div>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="phone">Phone / WhatsApp <span className="text-steel fw-normal">(optional)</span></label>
+              <input id="phone" type="tel" className="form-control" placeholder="050 123 4567" value={form.phone} onChange={set("phone")} autoComplete="tel" />
+              <div className="form-text">Employers use this to call you about your applications.</div>
+            </div>
+            <div className="mb-4">
+              <label className="form-label" htmlFor="password">Password</label>
+              <div className="position-relative">
                 <input
-                  type="text"
-                  name="name"
-                  className="form-control"
-                  placeholder="Enter your full name"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="form-control"
-                  placeholder="Enter your email"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Role</label>
-                <select
-                  name="role"
-                  className="form-select"
-                  value={form.role}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="jobseeker">Job Seeker</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  className="form-control"
-                  placeholder="Create password"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  className="form-control pe-5"
                   value={form.password}
-                  onChange={handleChange}
+                  onChange={set("password")}
+                  autoComplete="new-password"
+                  minLength={6}
                   required
                 />
+                <button
+                  type="button"
+                  className="btn btn-ghost position-absolute top-50 end-0 translate-middle-y me-1"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
-
-              <button
-                type="submit"
-                className="btn btn-warning w-100 fw-semibold"
-                disabled={loading}
-              >
-                {loading ? "Registering..." : "Register"}
-              </button>
-
-            </form>
-
-            <div className="text-center mt-3">
-              <p className="small mb-0">
-                Already have an account?{" "}
-                <Link to="/login" className="fw-bold text-decoration-none">
-                  Login
-                </Link>
-              </p>
+              <div className="form-text">At least 6 characters.</div>
             </div>
 
-          </div>
+            <button type="submit" className="btn btn-primary btn-lg w-100" disabled={loading}>
+              {loading ? "Creating account…" : "Create account"}
+            </button>
+          </form>
+
+          <p className="small text-steel mt-4 mb-0">Are you an employer? <Link to="/contact?subject=Post%20a%20job">Talk to us about posting jobs</Link>.</p>
         </div>
       </div>
     </div>

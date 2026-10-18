@@ -1,16 +1,34 @@
-# React + Vite
+# Jobz Dxb — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite + Bootstrap 5 (bundled) job portal for blue-collar jobs in the UAE.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm install
+cp .env.example .env     # point VITE_API_URL at your backend, e.g. http://localhost:5000/api
+npm run dev
+```
 
-## React Compiler
+## Deploy (Vercel)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Set `VITE_API_URL` in **Project → Settings → Environment Variables** (e.g. `https://bluecollarjobs-backend.onrender.com/api`).
+- `vercel.json` rewrites every path to `index.html` so links like `/jobs/123` work on refresh.
 
-## Expanding the ESLint configuration
+## Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+src/
+  service/api.js            all API calls (one axios instance, JWT attached automatically)
+  context/AuthContext.jsx   logged-in user, stored under localStorage "jobz.auth"
+  context/SavedJobsContext  saved-job ids synced with the backend
+  context/ToastContext      toast("Saved") / toast("Failed", "error")
+  components/               Navbar, Footer, JobCard, JobCategory, ui.jsx (Modal, ConfirmDialog, EmptyState, Pagination…)
+  pages/                    public pages, jobs/, company/, dashboard/ (candidate), admin/
+  utils/format.js           logos, salary/date formatting, emirates & job types
+```
+
+## Roles
+
+- **Candidate** — browse, save, apply, track applications, edit profile (`/dashboard`, `/applied`, `/saved`, `/profile`)
+- **Admin** — `/admin`: overview stats, jobs, companies, applications (status + notes + call/WhatsApp), users, contact messages

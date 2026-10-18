@@ -1,148 +1,109 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
-// import logo from "../assets/Images/Jobz-image.png";
-
-// function Navbar() {
-//   return (
-//     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-//       <div className="container-fluid px-4">
-//         <div className="row w-100 align-items-center">
-//           <div className="col-4">
-//             <Link
-//               className="navbar-brand d-flex align-items-center text-white m-0 text-decoration-none"
-//               to="/"
-//             >
-//               <img
-//                 src={logo}
-//                 alt="Blue Collar Jobz"
-//                 width={36}
-//                 height={36}
-//                 className="me-2"
-//               />
-//                Jobz Dxb
-//             </Link>
-//           </div>
-
-//           <div className="col-3"></div>
-
-//           <div className="col-5">
-//             <ul className="nav justify-content-end align-items-center gap-2">
-//               <li className="nav-item">
-//                 <Link className="nav-link text-white" to="/">
-//                   Home
-//                 </Link>
-//               </li>
-
-//               <li className="nav-item">
-//                 <Link className="nav-link text-white" to="/jobs">
-//                   Jobs
-//                 </Link>
-//               </li>
-
-//               <li className="nav-item">
-//                 <Link className="nav-link text-white" to="/companies">
-//                   Companies
-//                 </Link>
-//               </li>
-             
-
-//               <li className="nav-item">
-//                 <Link className="btn btn-outline-light btn-sm" to="/login">
-//                   Login
-//                 </Link>
-//               </li>
-
-//               <li className="nav-item">
-//                 <Link className="btn btn-warning btn-sm fw-semibold" to="/register">
-//                   Register
-//                 </Link>
-//               </li>
-//               <li className="nav-item">
-//                 <Link className="btn btn-primary btn-sm fw-semibold" to="/Saved">
-//                   Saved Jobs
-//                  </Link>
-//               </li>
-//             </ul>
-//           </div>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// }
-
-// export default Navbar;
-
-import React from "react";
-import { Link } from "react-router-dom";
-import logo from "../assets/Images/Jobz-image.png";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { FaBars, FaTimes, FaThLarge, FaBookmark, FaFileAlt, FaUserEdit, FaSignOutAlt, FaCog } from "react-icons/fa";
+import logo from "../assets/Images/logo-small.png";
+import { useAuth } from "../context/AuthContext";
+import { initials } from "../utils/format";
 
 function Navbar() {
+  const { user, isAdmin, logoutUser } = useAuth();
+  const location = useLocation();
+  // Menus remember the page they were opened on, so they close by themselves after navigation
+  const [openOn, setOpenOn] = useState(null);
+  const [menuOn, setMenuOn] = useState(null);
+  const open = openOn === location.pathname;
+  const menu = menuOn === location.pathname;
+  const setOpen = (fn) => setOpenOn((fn(open) ? location.pathname : null));
+  const setMenu = (fn) => setMenuOn((typeof fn === "function" ? fn(menu) : fn) ? location.pathname : null);
+  const menuRef = useRef(null);
+  const navigate = useNavigate();
+
+  // Close the user menu when clicking outside it
+  useEffect(() => {
+    if (!menu) return undefined;
+    const onDown = (e) => menuRef.current && !menuRef.current.contains(e.target) && setMenuOn(null);
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [menu]);
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate("/");
+  };
+
+  const links = [
+    { to: "/", label: "Home", end: true },
+    { to: "/jobs", label: "Find jobs" },
+    { to: "/companies", label: "Companies" },
+    { to: "/about", label: "About" },
+    { to: "/contact", label: "Contact" },
+  ];
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div className="container-fluid px-4">
-        <div className="row w-100 align-items-center">
-          <div className="col-3">
-            <Link
-              className="navbar-brand d-flex align-items-center text-white m-0 text-decoration-none"
-              to="/"
-            >
-              <img
-                src={logo}
-                alt="Blue Collar Jobz"
-                width={36}
-                height={36}
-                className="me-2"
-              />
-               Jobz Dxb
-            </Link>
-          </div>
+    <nav className="site-nav" aria-label="Main">
+      <div className="container inner position-relative">
+        <Link to="/" className="brand">
+          <img src={logo} alt="" />
+          Jobz Dxb
+        </Link>
 
-          <div className="col-2"></div>
+        <button
+          type="button"
+          className="nav-toggle"
+          aria-expanded={open}
+          aria-controls="main-nav"
+          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? <FaTimes /> : <FaBars />}
+        </button>
 
-          <div className="col-7">
-            <ul className="nav justify-content-end align-items-center gap-2">
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/">
-                  Home
-                </Link>
+        <div id="main-nav" className={`nav-collapse ${open ? "open" : ""}`}>
+          <ul className="nav-links">
+            {links.map((l) => (
+              <li key={l.to}>
+                <NavLink to={l.to} end={l.end}>{l.label}</NavLink>
               </li>
+            ))}
+          </ul>
 
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/jobs">
-                  Jobs
-                </Link>
-              </li>
-
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/companies">
-                  Companies
-                </Link>
-              </li>
-
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/about">
-                  About
-                </Link>
-              </li>
-
-              <li className="nav-item">
-                <Link className="nav-link text-white" to="/contact">
-                  Contact
-                </Link>
-              </li>
-
-              <li className="nav-item">
-                <Link className="btn btn-outline-light btn-sm" to="/login">
-                  Login
-                </Link>
-              </li>
-
-              <li className="nav-item">
-                <Link className="btn btn-primary btn-sm fw-semibold" to="/saved">
-                  Saved Jobs
-                </Link>
-              </li>
-            </ul>
+          <div className="nav-actions">
+            {!user ? (
+              <>
+                <Link to="/login" className="btn btn-sm btn-nav-login">Log in</Link>
+                <Link to="/register" className="btn btn-sm btn-nav-cta">Create account</Link>
+              </>
+            ) : (
+              <div className="user-menu" ref={menuRef}>
+                <button type="button" className="user-chip" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu((m) => !m)}>
+                  <span className="avatar">{initials(user.name)}</span>
+                  <span>{user.name?.split(" ")[0]}</span>
+                </button>
+                {menu && (
+                  <div className="dropdown-panel" role="menu">
+                    <div className="who">
+                      <strong>{user.name}</strong>
+                      <small>{user.email}</small>
+                    </div>
+                    {isAdmin ? (
+                      <>
+                        <Link to="/admin" role="menuitem"><FaCog /> Admin panel</Link>
+                        <Link to="/admin/jobs" role="menuitem"><FaThLarge /> Manage jobs</Link>
+                        <Link to="/admin/applications" role="menuitem"><FaFileAlt /> Applications</Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link to="/dashboard" role="menuitem"><FaThLarge /> My dashboard</Link>
+                        <Link to="/applied" role="menuitem"><FaFileAlt /> My applications</Link>
+                        <Link to="/saved" role="menuitem"><FaBookmark /> Saved jobs</Link>
+                        <Link to="/profile" role="menuitem"><FaUserEdit /> Edit profile</Link>
+                      </>
+                    )}
+                    <button type="button" role="menuitem" onClick={handleLogout}><FaSignOutAlt /> Log out</button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,148 +1,312 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaExternalLinkAlt } from "react-icons/fa";
+import AdminShell from "./AdminShell";
+import { CompanyLogo, ConfirmDialog, EmptyState, Modal } from "../../components/ui";
+import { useTitle } from "../../utils/useTitle";
+import {
+  adminGetJobs, adminCreateJob, adminUpdateJob, adminDeleteJob, getCompanies, errorMessage,
+} from "../../service/api";
+import { useToast } from "../../context/ToastContext";
+import { BUNDLED_LOGOS, BENEFIT_OPTIONS, COMMON_CATEGORIES, EMIRATES, JOB_TYPES, formatSalary, formatDate } from "../../utils/format";
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://bluecollarjobs-backend.onrender.com'
+const EMPTY = {
+  title: "", description: "", category: "", location: "Dubai", company: "", companyName: "", logo: "",
+  salary: "", jobType: "Full-time", requirements: "", benefits: [], vacancies: 1, isActive: true,
+};
 
-function AdminJobs() {
-  const [jobs, setJobs]         = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
-  const [success, setSuccess]   = useState("");
-  const navigate                = useNavigate();
+function JobForm({ initial, companies, onSaved, onClose }) {
+  const toast = useToast();
+  const [form, setForm] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const editing = Boolean(initial._id);
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    category: "",
-    location: "",
-    salary: "",
-    companyName: "",
-    jobType: "full-time",
-    logo: ""
-  });
+  const set = (field) => (e) => setForm({ ...form, [field]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
 
-  const token = JSON.parse(localStorage.getItem("user"))?.token;
-
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-
-  const fetchJobs = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/jobs`);
-      setJobs(res.data);
-    } catch (err) {
-      console.log(err);
-    }
+  const pickCompany = (e) => {
+    const c = companies.find((x) => x._id === e.target.value);
+    setForm({ ...form, company: e.target.value, companyName: c ? c.name : form.companyName, logo: c ? c.logo : form.logo });
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const toggleBenefit = (b) =>
+    setForm({ ...form, benefits: form.benefits.includes(b) ? form.benefits.filter((x) => x !== b) : [...form.benefits, b] });
 
-  const handleAddJob = async () => {
-    if (!form.title || !form.description || !form.category || !form.location) {
-      setError("Please fill all required fields");
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!form.title || !form.description || !form.category || !form.location || !(form.company || form.companyName)) {
+      setError("Title, company, trade, location and description are required");
       return;
     }
+    const payload = { ...form, vacancies: Number(form.vacancies) || 1 };
     try {
-      setLoading(true);
-      await axios.post(`${API_URL}/api/jobs`, form, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSuccess("Job added successfully!");
-      setError("");
-      setForm({ title: "", description: "", category: "", location: "", salary: "", companyName: "", jobType: "full-time", logo: "" });
-      fetchJobs();
+      setSaving(true);
+      const { data } = editing ? await adminUpdateJob(initial._id, payload) : await adminCreateJob(payload);
+      toast(editing ? "Job updated" : "Job posted");
+      onSaved(data, editing);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add job");
+      setError(errorMessage(err));
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this job?")) return;
-    try {
-      await axios.delete(`${API_URL}/api/jobs/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setJobs(jobs.filter(job => job._id !== id));
-      setSuccess("Job deleted!");
-    } catch (err) {
-      setError("Failed to delete job");
+      setSaving(false);
     }
   };
 
   return (
-    <div style={{ backgroundColor: "#f4f6f9", minHeight: "100vh", padding: "30px" }}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="fw-bold mb-0">Manage Jobs</h2>
-          <p className="text-muted mb-0">Add and remove job listings</p>
-        </div>
-        <button className="btn btn-outline-secondary" onClick={() => navigate("/admin")}>
-          ← Back to Dashboard
-        </button>
-      </div>
-
-      {error   && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-
-      <div className="row g-4">
-        <div className="col-md-5">
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: "12px" }}>
-            <h5 className="fw-bold mb-3">Add New Job</h5>
-            <input className="form-control mb-2" placeholder="Job Title *" name="title" value={form.title} onChange={handleChange} />
-            <textarea className="form-control mb-2" placeholder="Job Description *" name="description" rows="3" value={form.description} onChange={handleChange} />
-            <input className="form-control mb-2" placeholder="Category (e.g. Plumber, Driver) *" name="category" value={form.category} onChange={handleChange} />
-            <input className="form-control mb-2" placeholder="Location *" name="location" value={form.location} onChange={handleChange} />
-            <input className="form-control mb-2" placeholder="Company Name *" name="companyName" value={form.companyName} onChange={handleChange} />
-            <input className="form-control mb-2" placeholder="Salary (e.g. AED 3000)" name="salary" value={form.salary} onChange={handleChange} />
-            <select className="form-select mb-2" name="jobType" value={form.jobType} onChange={handleChange}>
-              <option value="full-time">Full Time</option>
-              <option value="part-time">Part Time</option>
-              <option value="contract">Contract</option>
-            </select>
-            <select className="form-select mb-3" name="logo" value={form.logo} onChange={handleChange}>
-              <option value="">Select Company Logo</option>
-              <option value="emirates.png">Emirates</option>
-              <option value="talabat.png">Talabat</option>
-              <option value="alnoor.png">Al Noor</option>
-              <option value="bright.png">Bright Facility</option>
-              <option value="lazord.png">Lazord</option>
-              <option value="dewa.png">Dewa</option>
-              <option value="abc.png">Abc</option>
-              <option value="eas.png">Eas</option>
-            </select>
-            <button className="btn btn-primary w-100 fw-bold" onClick={handleAddJob} disabled={loading}>
-              {loading ? "Adding..." : "Add Job"}
-            </button>
+    <Modal
+      title={editing ? "Edit job" : "Post a job"}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn btn-light-line" onClick={onClose}>Cancel</button>
+          <button type="submit" form="job-form" className="btn btn-primary" disabled={saving}>{saving ? "Saving…" : editing ? "Save changes" : "Post job"}</button>
+        </>
+      }
+    >
+      <form id="job-form" onSubmit={submit} noValidate>
+        {error && <div className="alert alert-danger py-2">{error}</div>}
+        <div className="row g-3">
+          <div className="col-12">
+            <label className="form-label" htmlFor="j-title">Job title *</label>
+            <input id="j-title" className="form-control" placeholder="e.g. Light Vehicle Driver" value={form.title} onChange={set("title")} />
           </div>
-        </div>
 
-        <div className="col-md-7">
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: "12px" }}>
-            <h5 className="fw-bold mb-3">All Jobs ({jobs.length})</h5>
-            {jobs.length === 0 ? (
-              <div className="text-center py-4 text-muted"><p>No jobs yet. Add your first job!</p></div>
+          <div className="col-md-6">
+            <label className="form-label" htmlFor="j-company">Company *</label>
+            <select id="j-company" className="form-select" value={form.company} onChange={pickCompany}>
+              <option value="">Not listed (type the name)</option>
+              {companies.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div className="col-md-6">
+            {!form.company ? (
+              <>
+                <label className="form-label" htmlFor="j-cname">Company name *</label>
+                <input id="j-cname" className="form-control" value={form.companyName} onChange={set("companyName")} />
+              </>
             ) : (
-              jobs.map(job => (
-                <div key={job._id} className="d-flex justify-content-between align-items-center border-bottom py-3">
-                  <div>
-                    <strong>{job.title}</strong>
-                    <p className="text-muted small mb-0">📍 {job.location} &nbsp;|&nbsp; 💼 {job.jobType} &nbsp;|&nbsp; 💰 {job.salary || "Not specified"}</p>
-                    <span className="badge bg-light text-dark border">{job.category}</span>
-                  </div>
-                  <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(job._id)}>Delete</button>
-                </div>
-              ))
+              <>
+                <span className="form-label d-block">Logo</span>
+                <div className="d-flex align-items-center gap-2"><CompanyLogo logo={form.logo} name={form.companyName} size="sm" /><small className="text-steel">From company profile</small></div>
+              </>
             )}
           </div>
+          {!form.company && (
+            <div className="col-12">
+              <label className="form-label" htmlFor="j-logo">Logo</label>
+              <select id="j-logo" className="form-select" value={BUNDLED_LOGOS[form.logo] ? form.logo : form.logo ? "__url" : ""} onChange={(e) => setForm({ ...form, logo: e.target.value === "__url" ? "https://" : e.target.value })}>
+                <option value="">No logo (show initials)</option>
+                {Object.entries(BUNDLED_LOGOS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                <option value="__url">Image URL…</option>
+              </select>
+              {form.logo && !BUNDLED_LOGOS[form.logo] && (
+                <input className="form-control mt-2" placeholder="https://…/logo.png" value={form.logo} onChange={set("logo")} aria-label="Logo image URL" />
+              )}
+            </div>
+          )}
+
+          <div className="col-md-6">
+            <label className="form-label" htmlFor="j-cat">Trade *</label>
+            <input id="j-cat" className="form-control" list="cat-options" placeholder="e.g. Driver" value={form.category} onChange={set("category")} />
+            <datalist id="cat-options">{COMMON_CATEGORIES.map((c) => <option key={c} value={c} />)}</datalist>
+          </div>
+          <div className="col-md-6">
+            <label className="form-label" htmlFor="j-loc">Emirate *</label>
+            <select id="j-loc" className="form-select" value={form.location} onChange={set("location")}>
+              {[...new Set([...EMIRATES, form.location].filter(Boolean))].map((e) => <option key={e}>{e}</option>)}
+            </select>
+          </div>
+
+          <div className="col-md-5">
+            <label className="form-label" htmlFor="j-salary">Salary</label>
+            <input id="j-salary" className="form-control" placeholder="AED 2,500 / month" value={form.salary} onChange={set("salary")} />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label" htmlFor="j-type">Job type</label>
+            <select id="j-type" className="form-select" value={form.jobType} onChange={set("jobType")}>
+              {JOB_TYPES.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="col-md-3">
+            <label className="form-label" htmlFor="j-vac">Openings</label>
+            <input id="j-vac" type="number" min="1" className="form-control" value={form.vacancies} onChange={set("vacancies")} />
+          </div>
+
+          <div className="col-12">
+            <label className="form-label" htmlFor="j-desc">Description *</label>
+            <textarea id="j-desc" className="form-control" rows={4} placeholder="What the work involves, shift hours, days off" value={form.description} onChange={set("description")} />
+          </div>
+          <div className="col-12">
+            <label className="form-label" htmlFor="j-req">Requirements</label>
+            <textarea id="j-req" className="form-control" rows={3} placeholder={"One per line, e.g.\nValid UAE driving licence\n2 years experience"} value={form.requirements} onChange={set("requirements")} />
+          </div>
+          <div className="col-12">
+            <span className="form-label d-block">Employer provides</span>
+            <div className="d-flex flex-wrap gap-2">
+              {BENEFIT_OPTIONS.map((b) => (
+                <button key={b} type="button" className={`chip ${form.benefits.includes(b) ? "chip-pay" : ""}`} onClick={() => toggleBenefit(b)} aria-pressed={form.benefits.includes(b)}>
+                  {b}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="col-12">
+            <label className="d-flex align-items-center gap-2" style={{ cursor: "pointer" }}>
+              <input type="checkbox" className="form-check-input m-0" checked={form.isActive} onChange={set("isActive")} />
+              Open for applications (visible on the site)
+            </label>
+          </div>
         </div>
+      </form>
+    </Modal>
+  );
+}
+
+function AdminJobs() {
+  useTitle("Manage jobs");
+  const toast = useToast();
+  const [params, setParams] = useSearchParams();
+  const [jobs, setJobs] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(params.get("new") ? EMPTY : null);
+  const [deleting, setDeleting] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+
+  useEffect(() => {
+    Promise.all([adminGetJobs(), getCompanies()])
+      .then(([j, c]) => {
+        setJobs(j.data);
+        setCompanies(c.data);
+      })
+      .catch((err) => toast(errorMessage(err), "error"))
+      .finally(() => setLoading(false));
+  }, [toast]);
+
+  const shown = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return jobs
+      .filter((j) => status === "all" || (status === "open" ? j.isActive : !j.isActive))
+      .filter((j) => !q || [j.title, j.companyName, j.category, j.location].some((v) => v?.toLowerCase().includes(q)));
+  }, [jobs, search, status]);
+
+  const openEdit = (job) =>
+    setEditing({
+      ...EMPTY,
+      ...job,
+      company: job.company?._id || job.company || "",
+      requirements: (job.requirements || []).join("\n"),
+      benefits: job.benefits || [],
+    });
+
+  const closeForm = () => {
+    setEditing(null);
+    if (params.get("new")) setParams({});
+  };
+
+  const onSaved = (job, wasEdit) => {
+    setJobs((list) => (wasEdit ? list.map((j) => (j._id === job._id ? job : j)) : [job, ...list]));
+    closeForm();
+  };
+
+  const toggleActive = async (job) => {
+    try {
+      const { data } = await adminUpdateJob(job._id, { isActive: !job.isActive });
+      setJobs((list) => list.map((j) => (j._id === job._id ? data : j)));
+      toast(data.isActive ? "Job reopened" : "Job closed");
+    } catch (err) {
+      toast(errorMessage(err), "error");
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setBusy(true);
+      await adminDeleteJob(deleting._id);
+      setJobs((list) => list.filter((j) => j._id !== deleting._id));
+      toast("Job deleted");
+      setDeleting(null);
+    } catch (err) {
+      toast(errorMessage(err), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <AdminShell title="Jobs" actions={<button className="btn btn-primary" onClick={() => setEditing(EMPTY)}><FaPlus /> Post a job</button>}>
+      <div className="toolbar">
+        <div className="input-icon grow">
+          <FaSearch aria-hidden="true" />
+          <input className="form-control" placeholder="Search title, company, trade or emirate" aria-label="Search jobs" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <select className="form-select" style={{ width: "auto" }} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
+          <option value="all">All jobs ({jobs.length})</option>
+          <option value="open">Open ({jobs.filter((j) => j.isActive).length})</option>
+          <option value="closed">Closed ({jobs.filter((j) => !j.isActive).length})</option>
+        </select>
       </div>
-    </div>
+
+      {loading ? (
+        <div className="skel" style={{ height: 320 }} />
+      ) : shown.length === 0 ? (
+        <EmptyState title={jobs.length ? "No jobs match" : "No jobs yet"} action={<button className="btn btn-primary" onClick={() => setEditing(EMPTY)}>Post a job</button>}>
+          {jobs.length ? "Change the search or status filter." : "Post your first job and it will appear on the site straight away."}
+        </EmptyState>
+      ) : (
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr><th>Job</th><th>Location</th><th>Salary</th><th>Applicants</th><th>Status</th><th>Posted</th><th aria-label="Actions" /></tr>
+            </thead>
+            <tbody>
+              {shown.map((j) => (
+                <tr key={j._id}>
+                  <td>
+                    <div className="d-flex align-items-center gap-2">
+                      <CompanyLogo logo={j.logo} name={j.companyName} size="sm" />
+                      <div>
+                        <div className="fw-semibold">{j.title}</div>
+                        <small className="text-steel">{j.companyName}, {j.category}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{j.location}</td>
+                  <td className="text-nowrap">{formatSalary(j.salary) || "—"}</td>
+                  <td>
+                    <Link to={`/admin/applications?job=${j._id}`} className="fw-semibold">{j.applicantsCount || 0}</Link>
+                  </td>
+                  <td>
+                    <button type="button" className={`status status-${j.isActive ? "active" : "closed"} border-0`} onClick={() => toggleActive(j)} title={j.isActive ? "Click to close" : "Click to reopen"}>
+                      {j.isActive ? "Open" : "Closed"}
+                    </button>
+                  </td>
+                  <td className="text-nowrap small text-steel">{formatDate(j.createdAt)}</td>
+                  <td className="text-nowrap text-end">
+                    <Link to={`/jobs/${j._id}`} className="btn btn-ghost btn-sm" aria-label={`View ${j.title}`} title="View on site"><FaExternalLinkAlt /></Link>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => openEdit(j)} aria-label={`Edit ${j.title}`} title="Edit"><FaEdit /></button>
+                    <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setDeleting(j)} aria-label={`Delete ${j.title}`} title="Delete"><FaTrash /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {editing && <JobForm initial={editing} companies={companies} onSaved={onSaved} onClose={closeForm} />}
+      {deleting && (
+        <ConfirmDialog
+          title="Delete this job?"
+          message={`"${deleting.title}" and its ${deleting.applicantsCount || 0} applications will be removed permanently. To hide it but keep the applications, close the job instead.`}
+          busy={busy}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleting(null)}
+        />
+      )}
+    </AdminShell>
   );
 }
 

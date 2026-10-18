@@ -1,73 +1,55 @@
-
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { FaRegBookmark } from "react-icons/fa";
 import JobCard from "../../components/JobCard";
-import { getJobById } from "../../service/api";
+import { EmptyState, JobRowSkeleton, PageHead } from "../../components/ui";
+import { useTitle } from "../../utils/useTitle";
+import { getSavedJobs, errorMessage } from "../../service/api";
+import { useSavedJobs } from "../../context/SavedJobsContext";
 
 function SavedJobs() {
-  const [jobs, setJobs]       = useState([]);
+  useTitle("Saved jobs");
+  const { savedIds } = useSavedJobs();
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchSavedJobs = async () => {
-      const savedIds = JSON.parse(localStorage.getItem("savedJobs")) || [];
-
-      if (savedIds.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // ✅ Fetch full job details for each saved job ID
-        const jobPromises = savedIds.map(id =>
-          getJobById(id).then(res => res.data).catch(() => null)
-        );
-        const results = await Promise.all(jobPromises);
-        setJobs(results.filter(job => job !== null));
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSavedJobs();
+    getSavedJobs()
+      .then(({ data }) => setItems(data))
+      .catch((err) => setError(errorMessage(err)))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="text-center py-5">
-      <div className="spinner-border text-primary" role="status" />
-    </div>
-  );
+  // Hide a job straight away when it's un-saved from its card
+  const visible = items.filter((s) => savedIds.has(s.job._id));
 
   return (
-    <div style={{ backgroundColor: "#f4f6f9", minHeight: "100vh", padding: "40px 0" }}>
-      <div className="container">
-
-        <h2 className="fw-bold text-center mb-2">⭐ Saved Jobs</h2>
-        <p className="text-center text-muted mb-4">
-          {jobs.length} job{jobs.length !== 1 ? "s" : ""} saved
-        </p>
-
-        {jobs.length > 0 ? (
-          <div className="row g-4">
-            {jobs.map((job) => (
-              <JobCard key={job._id} {...job} />
+    <>
+      <PageHead title="Saved jobs" crumb={<Link to="/dashboard">Dashboard</Link>}>
+        Jobs you've bookmarked. Apply before they close.
+      </PageHead>
+      <div className="container section-tight">
+        {loading ? (
+          <JobRowSkeleton count={3} />
+        ) : error ? (
+          <EmptyState title="Saved jobs couldn't load">{error}</EmptyState>
+        ) : visible.length === 0 ? (
+          <EmptyState icon={<FaRegBookmark />} title="No saved jobs" action={<Link to="/jobs" className="btn btn-primary">Find jobs</Link>}>
+            Tap the bookmark on any job to keep it here for later.
+          </EmptyState>
+        ) : (
+          <div className="job-list">
+            {visible.map((s) => (
+              <div key={s._id}>
+                {!s.job.isActive && <div className="small text-steel mb-1">This job is now closed</div>}
+                <JobCard {...s.job} />
+              </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-5">
-            <p className="text-muted">No saved jobs yet.</p>
-            <p className="text-muted small">
-              Tap "Save Job" on any job card to bookmark it here.
-            </p>
-            <Link to="/jobs" className="btn btn-primary">Browse Jobs</Link>
-          </div>
         )}
-
       </div>
-    </div>
+    </>
   );
 }
 

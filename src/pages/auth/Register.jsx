@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useTitle } from "../../utils/useTitle";
 import { useT } from "../../context/LanguageContext";
+import { homeFor } from "../../utils/roles";
 import sideImage from "../../assets/Images/hero-warehouse.jpg";
 
 function Register() {
@@ -21,7 +22,7 @@ function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />;
+  if (user) return <Navigate to={homeFor(user)} replace />;
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -111,7 +112,7 @@ function Register() {
             </button>
           </form>
 
-          <p className="small text-steel mt-4 mb-0">{t("auth.employer")} <Link to="/contact?subject=Post%20a%20job">{t("auth.talkToUs")}</Link></p>
+          <p className="small text-steel mt-4 mb-0">{t("auth.employer")} <Link to="/employers/register" className="fw-semibold">{t("emp.formTitle")}</Link></p>
         </div>
       </div>
     </div>

@@ -51,7 +51,7 @@ function Footer() {
               <li><FaRegCommentDots aria-hidden="true" /><Link to="/contact">{t("footer.sendMessage")}</Link></li>
               <li><FaMapMarkerAlt aria-hidden="true" />{t("contact.officeVal")}</li>
             </ul>
-            <p className="small mt-3 mb-0">{t("footer.hiring")} <Link to="/contact" className="text-white fw-semibold">{t("footer.postWithUs")}</Link></p>
+            <p className="small mt-3 mb-0">{t("footer.hiring")} <Link to="/employers" className="text-white fw-semibold">{t("footer.postWithUs")}</Link></p>
           </div>
         </div>
 

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { FaPlus, FaEdit, FaTrash, FaCheckCircle } from "react-icons/fa";
+import { Link, useSearchParams } from "react-router-dom";
+import { FaPlus, FaEdit, FaTrash, FaCheckCircle, FaPhoneAlt, FaWhatsapp, FaCheck, FaBan, FaUndo } from "react-icons/fa";
 import AdminShell from "./AdminShell";
 import { CompanyLogo, ConfirmDialog, EmptyState, Modal } from "../../components/ui";
 import { LogoUpload } from "../../components/Uploads";
 import { useTitle } from "../../utils/useTitle";
-import { getCompanies, adminCreateCompany, adminUpdateCompany, adminDeleteCompany, errorMessage } from "../../service/api";
+import { getCompanies, adminCreateCompany, adminUpdateCompany, adminDeleteCompany, adminSetCompanyStatus, errorMessage } from "../../service/api";
+import { toWhatsAppNumber } from "../../utils/whatsapp";
 import { useToast } from "../../context/ToastContext";
 import { BUNDLED_LOGOS, EMIRATES } from "../../utils/format";
 
@@ -117,6 +118,27 @@ function AdminCompanies() {
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [suspending, setSuspending] = useState(null);
+  const [note, setNote] = useState("");
+  const [params, setParams] = useSearchParams();
+  const filter = params.get("status") || "all";
+  const count = (s) => companies.filter((c) => (c.status || "approved") === s).length;
+  const shown = filter === "all" ? companies : companies.filter((c) => (c.status || "approved") === filter);
+
+  const setStatus = async (company, status, reason = "") => {
+    try {
+      setBusy(true);
+      const { data } = await adminSetCompanyStatus(company._id, status, reason);
+      setCompanies((list) => list.map((c) => (c._id === company._id ? { ...c, ...data, openJobs: status === "suspended" ? 0 : c.openJobs } : c)));
+      toast(status === "approved" ? `${company.name} approved` : status === "suspended" ? `${company.name} suspended` : "Status updated");
+      setSuspending(null);
+      setNote("");
+    } catch (err) {
+      toast(errorMessage(err), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     getCompanies()
@@ -153,11 +175,24 @@ function AdminCompanies() {
           Add employers here, then pick them when you post a job.
         </EmptyState>
       ) : (
+        <>
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          {[["all", `All (${companies.length})`], ["pending", `Waiting for approval (${count("pending")})`], ["approved", `Approved (${count("approved")})`], ["suspended", `Suspended (${count("suspended")})`]].map(([k, label]) => (
+            <button key={k} type="button" className={`btn btn-sm ${filter === k ? "btn-primary" : "btn-light-line"}`} onClick={() => setParams(k === "all" ? {} : { status: k })}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {shown.length === 0 ? (
+          <EmptyState title={filter === "pending" ? "No employers waiting" : "Nothing here"}>
+            {filter === "pending" ? "New employer sign-ups appear here for you to approve." : "No companies with this status."}
+          </EmptyState>
+        ) : (
         <div className="table-wrap">
           <table className="data-table">
-            <thead><tr><th>Company</th><th>Emirate</th><th>Open jobs</th><th>Contact</th><th aria-label="Actions" /></tr></thead>
+            <thead><tr><th>Company</th><th>Status</th><th>Emirate</th><th>Open jobs</th><th>Contact</th><th aria-label="Actions" /></tr></thead>
             <tbody>
-              {companies.map((c) => (
+              {shown.map((c) => (
                 <tr key={c._id}>
                   <td>
                     <div className="d-flex align-items-center gap-2">
@@ -168,10 +203,38 @@ function AdminCompanies() {
                       </div>
                     </div>
                   </td>
+                  <td>
+                    <span className={`status status-${c.status || "approved"}`}>{(c.status || "approved") === "pending" ? "Waiting" : c.status === "suspended" ? "Suspended" : "Approved"}</span>
+                    <div className="small text-steel mt-1">{c.owner ? "Employer account" : "Added by admin"}</div>
+                  </td>
                   <td>{c.location}</td>
                   <td>{c.openJobs || 0}</td>
-                  <td className="small">{c.phone || c.email || <span className="text-steel">—</span>}</td>
+                  <td className="small">
+                    {c.owner ? (
+                      <>
+                        <div className="fw-semibold">{c.owner.name}</div>
+                        <div className="text-steel">{c.owner.email}</div>
+                        {(c.owner.phone || c.phone) && (
+                          <div className="d-flex gap-2 mt-1">
+                            <a href={`tel:${c.owner.phone || c.phone}`} title="Call"><FaPhoneAlt /> <span className="ltr">{c.owner.phone || c.phone}</span></a>
+                            <a href={`https://wa.me/${toWhatsAppNumber(c.owner.phone || c.phone)}`} target="_blank" rel="noreferrer" title="WhatsApp" aria-label="WhatsApp"><FaWhatsapp /></a>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      c.phone || c.email || <span className="text-steel">—</span>
+                    )}
+                  </td>
                   <td className="text-end text-nowrap">
+                    {(c.status || "approved") === "pending" && (
+                      <button type="button" className="btn btn-success btn-sm me-1" disabled={busy} onClick={() => setStatus(c, "approved")}><FaCheck /> Approve</button>
+                    )}
+                    {c.owner && (c.status || "approved") !== "suspended" && (
+                      <button type="button" className="btn btn-ghost btn-sm text-danger" disabled={busy} onClick={() => setSuspending(c)} title={c.status === "pending" ? "Reject / suspend" : "Suspend"} aria-label={`Suspend ${c.name}`}><FaBan /></button>
+                    )}
+                    {c.status === "suspended" && (
+                      <button type="button" className="btn btn-light-line btn-sm me-1" disabled={busy} onClick={() => setStatus(c, "approved")} title="Approve again"><FaUndo /> Reinstate</button>
+                    )}
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing({ ...EMPTY, ...c })} aria-label={`Edit ${c.name}`}><FaEdit /></button>
                     <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setDeleting(c)} aria-label={`Delete ${c.name}`}><FaTrash /></button>
                   </td>
@@ -180,6 +243,26 @@ function AdminCompanies() {
             </tbody>
           </table>
         </div>
+        )}
+        </>
+      )}
+
+      {suspending && (
+        <Modal
+          title={`Suspend ${suspending.name}?`}
+          size="sm"
+          onClose={() => setSuspending(null)}
+          footer={
+            <>
+              <button type="button" className="btn btn-light-line" onClick={() => setSuspending(null)}>Cancel</button>
+              <button type="button" className="btn btn-danger" disabled={busy} onClick={() => setStatus(suspending, "suspended", note)}>{busy ? "Working…" : "Suspend"}</button>
+            </>
+          }
+        >
+          <p>All of this company's jobs will be closed and hidden, and the employer can't post until you reinstate them.</p>
+          <label className="form-label" htmlFor="s-note">Reason shown to the employer <span className="text-steel fw-normal">(optional)</span></label>
+          <input id="s-note" className="form-control" placeholder="e.g. Could not confirm the trade licence" value={note} onChange={(e) => setNote(e.target.value)} />
+        </Modal>
       )}
 
       {editing && <CompanyForm initial={editing} onSaved={onSaved} onClose={() => setEditing(null)} />}

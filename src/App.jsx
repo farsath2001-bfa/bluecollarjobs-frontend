@@ -17,6 +17,7 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ProtectedRoute from "./pages/auth/ProtectedRoute";
+import EmployerRegister from "./pages/employer/EmployerRegister";
 
 import Job from "./pages/jobs/Job";
 import JobDetails from "./pages/jobs/JobDetails";
@@ -38,8 +39,16 @@ const AdminApplications = lazy(() => import("./pages/admin/AdminApplications"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const AdminAccount = lazy(() => import("./pages/admin/AdminAccount"));
+// Employer area (also loads on demand)
+const EmployerDashboard = lazy(() => import("./pages/employer/EmployerDashboard"));
+const EmployerCompany = lazy(() => import("./pages/employer/EmployerCompany"));
 
 const candidate = (el) => <ProtectedRoute roleRequired="candidate">{el}</ProtectedRoute>;
+const employer = (el) => (
+  <ProtectedRoute roleRequired="employer">
+    <Suspense fallback={<Spinner />}>{el}</Suspense>
+  </ProtectedRoute>
+);
 const admin = (el) => (
   <ProtectedRoute roleRequired="admin">
     <Suspense fallback={<Spinner />}>{el}</Suspense>
@@ -82,6 +91,13 @@ function App() {
             <Route path="/admin/users" element={admin(<AdminUsers />)} />
             <Route path="/admin/messages" element={admin(<AdminMessages />)} />
             <Route path="/admin/account" element={admin(<AdminAccount />)} />
+
+            <Route path="/employers" element={<EmployerRegister />} />
+            <Route path="/employers/register" element={<EmployerRegister />} />
+            <Route path="/employer" element={employer(<EmployerDashboard />)} />
+            <Route path="/employer/jobs" element={employer(<AdminJobs employer />)} />
+            <Route path="/employer/applicants" element={employer(<AdminApplications employer />)} />
+            <Route path="/employer/company" element={employer(<EmployerCompany />)} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

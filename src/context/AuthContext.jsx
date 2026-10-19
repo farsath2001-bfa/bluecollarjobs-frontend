@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isAdmin: user?.role === "admin", loginUser, updateUser, logoutUser }),
+    () => ({ user, isAdmin: user?.role === "admin", isEmployer: user?.role === "employer", isCandidate: !!user && !["admin", "employer"].includes(user.role), loginUser, updateUser, logoutUser }),
     [user, loginUser, updateUser, logoutUser]
   );
 

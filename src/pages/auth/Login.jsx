@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useTitle } from "../../utils/useTitle";
 import { useT } from "../../context/LanguageContext";
+import { homeFor } from "../../utils/roles";
 import sideImage from "../../assets/Images/hero-construction.jpg";
 
 function Login() {
@@ -23,7 +24,7 @@ function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />;
+  if (user) return <Navigate to={homeFor(user)} replace />;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -37,7 +38,7 @@ function Login() {
       const { data } = await loginUser({ email, password });
       saveSession(data);
       toast(t("auth.welcomeBack", { name: data.name.split(" ")[0] }));
-      navigate(from && data.role !== "admin" ? from : data.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      navigate(from && !["admin", "employer"].includes(data.role) ? from : homeFor(data), { replace: true });
     } catch (err) {
       setError(errorMessage(err, t("auth.errLoginFailed")));
     } finally {

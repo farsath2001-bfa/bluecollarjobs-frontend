@@ -18,6 +18,12 @@ function Admin() {
           <div className="row g-3">{Array.from({ length: 4 }).map((_, i) => <div className="col-6 col-lg-3" key={i}><div className="skel" style={{ height: 104 }} /></div>)}</div>
         ) : (
           <>
+            {stats.pendingEmployers > 0 && (
+              <Link to="/admin/companies?status=pending" className="notice notice-warn mb-3 text-decoration-none">
+                <strong>{stats.pendingEmployers} {stats.pendingEmployers === 1 ? "employer is" : "employers are"} waiting for approval.</strong>
+                <span className="ms-auto fw-semibold">Review now →</span>
+              </Link>
+            )}
             <div className="row g-3 mb-4">
               <div className="col-6 col-lg-3">
                 <Link to="/admin/jobs" className="stat-tile">

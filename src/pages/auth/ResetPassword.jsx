@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useTitle } from "../../utils/useTitle";
 import { useT } from "../../context/LanguageContext";
+import { homeFor } from "../../utils/roles";
 import sideImage from "../../assets/Images/hero-construction.jpg";
 
 function ResetPassword() {
@@ -32,7 +33,7 @@ function ResetPassword() {
       const { data } = await resetPassword(token, password);
       saveSession(data);
       toast(t("auth.resetDone"));
-      navigate(data.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      navigate(homeFor(data), { replace: true });
     } catch (err) {
       setError(errorMessage(err, t("common.genericError")));
     } finally {

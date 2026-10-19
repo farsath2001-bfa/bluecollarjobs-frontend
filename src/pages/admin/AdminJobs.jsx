@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaExternalLinkAlt } from "react-icons/fa";
 import AdminShell from "./AdminShell";
+import EmployerShell from "../employer/EmployerShell";
 import { CompanyLogo, ConfirmDialog, EmptyState, Modal } from "../../components/ui";
 import { useTitle } from "../../utils/useTitle";
 import {
@@ -27,7 +28,7 @@ const toDateInput = (d) => {
 const fromDateInput = (s) => (s ? new Date(`${s}T23:59:59`).toISOString() : "");
 const isExpired = (j) => j.expiresAt && new Date(j.expiresAt) <= new Date();
 
-function JobForm({ initial, companies, onSaved, onClose }) {
+function JobForm({ initial, companies, onSaved, onClose, employer }) {
   const toast = useToast();
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
@@ -47,8 +48,8 @@ function JobForm({ initial, companies, onSaved, onClose }) {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!form.title || !form.description || !form.category || !form.location || !(form.company || form.companyName)) {
-      setError("Title, company, trade, location and description are required");
+    if (!form.title || !form.description || !form.category || !form.location || (!employer && !(form.company || form.companyName))) {
+      setError(employer ? "Title, trade, emirate and description are required" : "Title, company, trade, location and description are required");
       return;
     }
     const payload = { ...form, vacancies: Number(form.vacancies) || 1, expiresAt: fromDateInput(form.expiresAt) };
@@ -83,6 +84,7 @@ function JobForm({ initial, companies, onSaved, onClose }) {
             <input id="j-title" className="form-control" placeholder="e.g. Light Vehicle Driver" value={form.title} onChange={set("title")} />
           </div>
 
+          {!employer && (<>
           <div className="col-md-6">
             <label className="form-label" htmlFor="j-company">Company *</label>
             <select id="j-company" className="form-select" value={form.company} onChange={pickCompany}>
@@ -117,6 +119,7 @@ function JobForm({ initial, companies, onSaved, onClose }) {
               <LogoUpload value={form.logo} onChange={(url) => setForm((f) => ({ ...f, logo: url }))} />
             </div>
           )}
+          </>)}
 
           <div className="col-md-6">
             <label className="form-label" htmlFor="j-cat">Trade *</label>
@@ -185,8 +188,10 @@ function JobForm({ initial, companies, onSaved, onClose }) {
   );
 }
 
-function AdminJobs() {
-  useTitle("Manage jobs");
+function AdminJobs({ employer = false }) {
+  useTitle(employer ? "My jobs" : "Manage jobs");
+  const Shell = employer ? EmployerShell : AdminShell;
+  const applicantsPath = employer ? "/employer/applicants" : "/admin/applications";
   const toast = useToast();
   const [params, setParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
@@ -199,14 +204,14 @@ function AdminJobs() {
   const [status, setStatus] = useState("all");
 
   useEffect(() => {
-    Promise.all([adminGetJobs(), getCompanies()])
+    Promise.all([adminGetJobs(), employer ? Promise.resolve({ data: [] }) : getCompanies()])
       .then(([j, c]) => {
         setJobs(j.data);
         setCompanies(c.data);
       })
       .catch((err) => toast(errorMessage(err), "error"))
       .finally(() => setLoading(false));
-  }, [toast]);
+  }, [toast, employer]);
 
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -261,7 +266,23 @@ function AdminJobs() {
   };
 
   return (
-    <AdminShell title="Jobs" actions={<button className="btn btn-primary" onClick={() => setEditing(EMPTY)}><FaPlus /> Post a job</button>}>
+    <Shell
+      title={employer ? "My jobs" : "Jobs"}
+      actions={
+        employer
+          ? (company) => (
+              <button
+                className="btn btn-primary"
+                onClick={() => setEditing(EMPTY)}
+                disabled={company?.status !== "approved"}
+                title={company?.status === "approved" ? undefined : "You can post jobs once your account is approved"}
+              >
+                <FaPlus /> Post a job
+              </button>
+            )
+          : <button className="btn btn-primary" onClick={() => setEditing(EMPTY)}><FaPlus /> Post a job</button>
+      }
+    >
       <div className="toolbar">
         <div className="input-icon grow">
           <FaSearch aria-hidden="true" />
@@ -278,7 +299,7 @@ function AdminJobs() {
         <div className="skel" style={{ height: 320 }} />
       ) : shown.length === 0 ? (
         <EmptyState title={jobs.length ? "No jobs match" : "No jobs yet"} action={<button className="btn btn-primary" onClick={() => setEditing(EMPTY)}>Post a job</button>}>
-          {jobs.length ? "Change the search or status filter." : "Post your first job and it will appear on the site straight away."}
+          {jobs.length ? "Change the search or status filter." : employer ? "Post your first job — it goes live as soon as you save it." : "Post your first job and it will appear on the site straight away."}
         </EmptyState>
       ) : (
         <div className="table-wrap">
@@ -301,7 +322,7 @@ function AdminJobs() {
                   <td>{j.location}</td>
                   <td className="text-nowrap">{formatSalary(j.salary) || "—"}</td>
                   <td>
-                    <Link to={`/admin/applications?job=${j._id}`} className="fw-semibold">{j.applicantsCount || 0}</Link>
+                    <Link to={`${applicantsPath}?job=${j._id}`} className="fw-semibold">{j.applicantsCount || 0}</Link>
                   </td>
                   <td>
                     <button type="button" className={`status status-${j.isActive ? "active" : "closed"} border-0`} onClick={() => toggleActive(j)} title={j.isActive ? "Click to close" : "Click to reopen"}>
@@ -326,7 +347,7 @@ function AdminJobs() {
         </div>
       )}
 
-      {editing && <JobForm initial={editing} companies={companies} onSaved={onSaved} onClose={closeForm} />}
+      {editing && <JobForm initial={editing} companies={companies} onSaved={onSaved} onClose={closeForm} employer={employer} />}
       {deleting && (
         <ConfirmDialog
           title="Delete this job?"
@@ -336,7 +357,7 @@ function AdminJobs() {
           onCancel={() => setDeleting(null)}
         />
       )}
-    </AdminShell>
+    </Shell>
   );
 }
 

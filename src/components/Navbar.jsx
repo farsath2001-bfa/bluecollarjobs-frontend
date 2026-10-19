@@ -8,7 +8,7 @@ import { useT } from "../context/LanguageContext";
 import LanguageSwitch from "./LanguageSwitch";
 
 function Navbar() {
-  const { user, isAdmin, logoutUser } = useAuth();
+  const { user, isAdmin, isEmployer, logoutUser } = useAuth();
   const location = useLocation();
   // Menus remember the page they were opened on, so they close by themselves after navigation
   const [openOn, setOpenOn] = useState(null);
@@ -40,6 +40,7 @@ function Navbar() {
     { to: "/companies", label: t("nav.companies") },
     { to: "/about", label: t("nav.about") },
     { to: "/contact", label: t("nav.contact") },
+    ...(!user ? [{ to: "/employers", label: t("nav.employers") }] : []),
   ];
 
   return (
@@ -88,7 +89,14 @@ function Navbar() {
                       <strong>{user.name}</strong>
                       <small>{user.email}</small>
                     </div>
-                    {isAdmin ? (
+                    {isEmployer ? (
+                      <>
+                        <Link to="/employer" role="menuitem"><FaThLarge /> {t("nav.employerDashboard")}</Link>
+                        <Link to="/employer/jobs" role="menuitem"><FaCog /> {t("nav.myJobs")}</Link>
+                        <Link to="/employer/applicants" role="menuitem"><FaFileAlt /> {t("nav.applicants")}</Link>
+                        <Link to="/employer/company" role="menuitem"><FaUserCircle /> {t("nav.companyProfile")}</Link>
+                      </>
+                    ) : isAdmin ? (
                       <>
                         <Link to="/admin" role="menuitem"><FaCog /> {t("nav.adminPanel")}</Link>
                         <Link to="/admin/jobs" role="menuitem"><FaThLarge /> {t("nav.manageJobs")}</Link>

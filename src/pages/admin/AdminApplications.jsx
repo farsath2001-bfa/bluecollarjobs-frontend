@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FaPhoneAlt, FaWhatsapp, FaEnvelope, FaSearch, FaFileAlt, FaDownload } from "react-icons/fa";
 import AdminShell from "./AdminShell";
+import EmployerShell from "../employer/EmployerShell";
 import { EmptyState, Modal, StatusBadge } from "../../components/ui";
 import { useTitle } from "../../utils/useTitle";
 import { adminGetApplications, adminUpdateApplication, openFile, errorMessage } from "../../service/api";
@@ -125,8 +126,9 @@ function ApplicationModal({ app, onChange, onClose }) {
   );
 }
 
-function AdminApplications() {
-  useTitle("Applications");
+function AdminApplications({ employer = false }) {
+  useTitle(employer ? "Applicants" : "Applications");
+  const Shell = employer ? EmployerShell : AdminShell;
   const toast = useToast();
   const [params, setParams] = useSearchParams();
   const [apps, setApps] = useState([]);
@@ -165,8 +167,8 @@ function AdminApplications() {
   const jobTitle = jobFilter && apps.find((a) => a.job?._id === jobFilter)?.job?.title;
 
   return (
-    <AdminShell
-      title="Applications"
+    <Shell
+      title={employer ? "Applicants" : "Applications"}
       actions={
         <button
           type="button"
@@ -199,7 +201,7 @@ function AdminApplications() {
         <div className="skel" style={{ height: 300 }} />
       ) : shown.length === 0 ? (
         <EmptyState icon={<FaFileAlt />} title={apps.length ? "No applications match" : "No applications yet"}>
-          {apps.length ? "Change the search or status filter." : "Applications appear here as soon as candidates apply."}
+          {apps.length ? "Change the search or status filter." : employer ? "When job seekers apply to your jobs, they appear here with their phone number and CV." : "Applications appear here as soon as candidates apply."}
         </EmptyState>
       ) : (
         <div className="table-wrap">
@@ -228,7 +230,7 @@ function AdminApplications() {
       )}
 
       {open && <ApplicationModal app={open} onChange={onChange} onClose={() => setOpen(null)} />}
-    </AdminShell>
+    </Shell>
   );
 }
 

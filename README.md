@@ -53,4 +53,5 @@ src/
 ## Roles
 
 - **Candidate** — browse, save, apply, track applications, edit profile (`/dashboard`, `/applied`, `/saved`, `/profile`)
-- **Admin** — `/admin`: overview stats, jobs (with WhatsApp number and closing date), companies (logo upload), applications (status + notes + call/WhatsApp + CSV export), users, contact messages, My account (name, phone, password)
+- **Employer** — sign up at `/employers`; waits for admin approval, then `/employer`: dashboard, My jobs (post/edit/close), Applicants (open CV, call/WhatsApp, status, CSV), Company profile. Approved employers' jobs go live immediately. The jobs and applicants screens are the admin ones running in `employer` mode — the server limits them to the employer's own company.
+- **Admin** — `/admin`: overview stats, jobs (with WhatsApp number and closing date), companies (logo upload), applications (status + notes + call/WhatsApp + CSV export), users, contact messages, employer approval (Companies → Waiting for approval; approve or suspend with a reason), My account (name, phone, password)

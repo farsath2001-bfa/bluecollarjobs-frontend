@@ -11,7 +11,8 @@ import { useAuth } from "../context/AuthContext";
 function JobCard({ _id, title, companyName, location, salary, logo, jobType, createdAt, expiresAt, benefits = [] }) {
   const t = useT();
   const { isSaved, toggleSave } = useSavedJobs();
-  const { isAdmin } = useAuth();
+  const { user, isCandidate } = useAuth();
+  const canSave = !user || isCandidate; // admins and employers don't save jobs
   const saved = isSaved(_id);
   const pay = formatSalary(salary);
   const housing = benefits.some((b) => /accommodation/i.test(b));
@@ -39,7 +40,7 @@ function JobCard({ _id, title, companyName, location, salary, logo, jobType, cre
       </div>
       <div className="job-side">
         {pay ? <span className="salary ltr">{pay}</span> : <span className="salary-none">{t("common.salaryOnRequest")}</span>}
-        {!isAdmin && (
+        {canSave && (
           <button
             type="button"
             className={`save-btn ${saved ? "on" : ""}`}

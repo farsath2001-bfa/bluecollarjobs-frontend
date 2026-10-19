@@ -43,6 +43,7 @@ export const normalizeJobList = (data) =>
 // ---- Auth ----
 export const loginUser      = (data) => API.post("/auth/login", data);
 export const registerUser   = (data) => API.post("/auth/register", data);
+export const registerEmployer = (data) => API.post("/auth/register-employer", data);
 export const getProfile     = ()     => API.get("/auth/profile");
 export const updateProfile  = (data) => API.put("/auth/profile", data);
 export const changePassword = (data) => API.put("/auth/password", data);
@@ -107,6 +108,10 @@ export const getCompanyById = (id)     => API.get(`/companies/${id}`);
 // ---- Contact ----
 export const sendContactMessage = (data) => API.post("/contact", data);
 
+// ---- Employer (their own company; jobs and applicants use the admin endpoints, scoped by the server) ----
+export const getEmployerCompany    = ()     => API.get("/employer/company");
+export const updateEmployerCompany = (data) => API.put("/employer/company", data);
+
 // ---- Admin ----
 export const adminGetStats      = ()          => API.get("/admin/stats");
 export const adminGetJobs       = (params)    => API.get("/jobs/admin/all", { params });
@@ -116,6 +121,7 @@ export const adminDeleteJob     = (id)        => API.delete(`/jobs/${id}`);
 export const adminCreateCompany = (data)      => API.post("/companies", data);
 export const adminUpdateCompany = (id, data)  => API.put(`/companies/${id}`, data);
 export const adminDeleteCompany = (id)        => API.delete(`/companies/${id}`);
+export const adminSetCompanyStatus = (id, status, note) => API.put(`/companies/${id}/status`, { status, note });
 export const adminGetApplications = (params)  => API.get("/applications", { params });
 export const adminUpdateApplication = (id, data) => API.put(`/applications/${id}/status`, data);
 export const adminGetUsers      = ()          => API.get("/admin/users");

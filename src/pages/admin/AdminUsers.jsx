@@ -65,6 +65,7 @@ function AdminUsers() {
         <select className="form-select" style={{ width: "auto" }} value={role} onChange={(e) => setRole(e.target.value)} aria-label="Role">
           <option value="">Everyone ({users.length})</option>
           <option value="candidate">Job seekers ({users.filter((u) => u.role === "candidate").length})</option>
+          <option value="employer">Employers ({users.filter((u) => u.role === "employer").length})</option>
           <option value="admin">Admins ({users.filter((u) => u.role === "admin").length})</option>
         </select>
       </div>
@@ -93,13 +94,15 @@ function AdminUsers() {
                   <td>{u.location || "—"}</td>
                   <td>{u.applications}</td>
                   <td className="small text-steel text-nowrap">{formatDate(u.createdAt)}</td>
-                  <td><span className={`chip ${u.role === "admin" ? "chip-blue" : ""}`}>{u.role === "admin" ? "Admin" : "Job seeker"}</span></td>
+                  <td><span className={`chip ${u.role === "admin" ? "chip-blue" : u.role === "employer" ? "chip-pay" : ""}`}>{u.role === "admin" ? "Admin" : u.role === "employer" ? "Employer" : "Job seeker"}</span></td>
                   <td className="text-end text-nowrap">
                     {u._id !== me._id && (
                       <>
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirm({ type: "role", user: u })}>
-                          {u.role === "admin" ? "Remove admin" : "Make admin"}
-                        </button>
+                        {u.role !== "employer" && (
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirm({ type: "role", user: u })}>
+                            {u.role === "admin" ? "Remove admin" : "Make admin"}
+                          </button>
+                        )}
                         <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setConfirm({ type: "delete", user: u })} aria-label={`Delete ${u.name}`}><FaTrash /></button>
                       </>
                     )}

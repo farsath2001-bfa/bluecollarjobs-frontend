@@ -67,7 +67,7 @@ function JobDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const t = useT();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isEmployer } = useAuth();
   const { isSaved, toggleSave } = useSavedJobs();
   const toast = useToast();
   // Result is stored with the id it belongs to, so changing jobs shows the loader again
@@ -93,11 +93,11 @@ function JobDetails() {
 
   // Has this candidate already applied?
   useEffect(() => {
-    if (!user || isAdmin) return;
+    if (!user || isAdmin || isEmployer) return;
     getMyApplications()
       .then(({ data }) => setApplication(data.find((a) => (a.job?._id || a.job) === id) || null))
       .catch(() => {});
-  }, [id, user, isAdmin]);
+  }, [id, user, isAdmin, isEmployer]);
 
   if (loading) return <Spinner />;
 
@@ -135,8 +135,18 @@ function JobDetails() {
     }
   };
 
+  const ownJob = isEmployer && String(user.company) === String(company?._id || job.company);
   const applyArea = isAdmin ? (
     <Link to="/admin/jobs" className="btn btn-primary btn-lg w-100">{t("detail.editAdmin")}</Link>
+  ) : isEmployer ? (
+    ownJob ? (
+      <div className="d-grid gap-2">
+        <Link to="/employer/jobs" className="btn btn-primary btn-lg">{t("nav.myJobs")}</Link>
+        <Link to={`/employer/applicants?job=${job._id}`} className="btn btn-light-line">{t("nav.applicants")}</Link>
+      </div>
+    ) : (
+      <p className="small text-steel mb-0">{t("emp.cantApply")}</p>
+    )
   ) : application ? (
     <div className="text-center">
       <div className="chip chip-pay mb-2"><FaCheckCircle /> {t("detail.applied", { when: timeAgo(application.createdAt) })}</div>
@@ -163,7 +173,7 @@ function JobDetails() {
         <FaArrowLeft className="flip-rtl" /> {t("detail.back")}
       </button>
 
-      {!isOpen && !isAdmin && <div className="closed-banner mb-3">{t("common.closed")}</div>}
+      {!isOpen && !isAdmin && !isEmployer && <div className="closed-banner mb-3">{t("common.closed")}</div>}
 
       <div className="row g-4">
         <div className="col-lg-8">
@@ -236,7 +246,7 @@ function JobDetails() {
             {pay ? <span className="salary mb-3 ltr">{pay}</span> : <p className="fw-semibold">{t("common.discussed")}</p>}
             {applyArea}
             <div className="d-flex gap-2 mt-2">
-              {!isAdmin && (
+              {!isAdmin && !isEmployer && (
                 <button type="button" className="btn btn-light-line flex-fill" onClick={() => toggleSave(job._id)} aria-pressed={saved}>
                   {saved ? <><FaBookmark className="text-danger" /> {t("common.saved")}</> : <><FaRegBookmark /> {t("common.save")}</>}
                 </button>

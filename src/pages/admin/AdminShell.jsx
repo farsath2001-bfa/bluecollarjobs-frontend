@@ -14,7 +14,7 @@ function AdminShell({ title, actions, children }) {
   const tabs = [
     { to: "/admin", label: "Overview", icon: FaChartBar, end: true },
     { to: "/admin/jobs", label: "Jobs", icon: FaBriefcase },
-    { to: "/admin/companies", label: "Companies", icon: FaBuilding },
+    { to: "/admin/companies", label: "Companies", icon: FaBuilding, count: stats?.pendingEmployers },
     { to: "/admin/applications", label: "Applications", icon: FaFileAlt, count: stats?.pendingApplications },
     { to: "/admin/users", label: "Users", icon: FaUsers },
     { to: "/admin/messages", label: "Messages", icon: FaEnvelope, count: stats?.unreadMessages },

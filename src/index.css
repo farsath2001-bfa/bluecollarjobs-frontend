@@ -607,3 +607,15 @@ html:lang(ur) body { line-height: 1.9; }
 /* "Install the app" button in the footer */
 .btn-install { display: inline-flex; align-items: center; gap: 0.5rem; background: #fff; color: var(--navy); border: 1px solid #fff; font-weight: 600; }
 .btn-install:hover { background: var(--blue-soft); color: var(--navy); }
+
+/* Status notices (employer area) */
+.notice { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.85rem 1rem; border-radius: var(--radius); border: 1px solid; }
+.notice > svg { flex: none; margin-top: 0.2rem; }
+.notice-warn { background: var(--warn-soft); color: #6b4600; border-color: #f2d48e; }
+.notice-danger { background: var(--danger-soft); color: #8f241c; border-color: #f3b7b1; }
+.notice-ok { background: var(--pay-soft); color: #0b5e35; border-color: #a8dcbf; }
+.notice a { color: inherit; font-weight: 600; text-decoration: underline; }
+a.notice { align-items: center; }
+a.notice:hover { filter: brightness(0.98); }
+.status-approved { background: var(--pay-soft); color: var(--pay); }
+.status-suspended { background: var(--danger-soft); color: var(--danger); }

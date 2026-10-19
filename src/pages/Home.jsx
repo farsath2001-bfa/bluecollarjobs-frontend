@@ -178,7 +178,7 @@ function Home() {
               <h2>{t("home.hiringTitle")}</h2>
               <p>{t("home.hiringText")}</p>
             </div>
-            <Link to="/contact?subject=Post%20a%20job" className="btn btn-lg" style={{ background: "#fff", color: "var(--navy)" }}>
+            <Link to="/employers" className="btn btn-lg" style={{ background: "#fff", color: "var(--navy)" }}>
               {t("home.postJob")}
             </Link>
           </div>

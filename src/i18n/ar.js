@@ -385,6 +385,7 @@ const ar = {
   "footer.touch": "تواصل معنا",
   "footer.sendMessage": "أرسل لنا رسالة",
   "footer.whatsapp": "راسلنا على واتساب",
+  "footer.install": "ثبّت التطبيق",
   "footer.hiring": "توظّف؟",
   "footer.postWithUs": "انشر وظيفة معنا",
   "footer.rights": "© {year} Jobz Dxb. جميع الحقوق محفوظة.",

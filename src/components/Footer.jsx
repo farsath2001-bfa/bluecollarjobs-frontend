@@ -4,6 +4,7 @@ import { FaEnvelope, FaMapMarkerAlt, FaRegCommentDots, FaWhatsapp } from "react-
 import logo from "../assets/Images/logo-small.png";
 import { useT } from "../context/LanguageContext";
 import { SITE_WHATSAPP, waLink } from "../utils/whatsapp";
+import InstallApp from "./InstallApp";
 
 function Footer() {
   const t = useT();
@@ -17,6 +18,7 @@ function Footer() {
               Jobz Dxb
             </Link>
             <p className="mt-3 mb-0" style={{ maxWidth: "34ch" }}>{t("footer.tagline")}</p>
+            <InstallApp className="mt-3" />
           </div>
 
           <div className="col-6 col-lg-2">

@@ -385,6 +385,7 @@ const ur = {
   "footer.touch": "رابطہ کریں",
   "footer.sendMessage": "ہمیں پیغام بھیجیں",
   "footer.whatsapp": "WhatsApp کریں",
+  "footer.install": "ایپ انسٹال کریں",
   "footer.hiring": "بھرتی کر رہے ہیں؟",
   "footer.postWithUs": "ہمارے ساتھ نوکری پوسٹ کریں",
   "footer.rights": "© {year} Jobz Dxb. جملہ حقوق محفوظ ہیں۔",

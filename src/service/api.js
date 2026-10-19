@@ -60,6 +60,28 @@ const upload = (path, file, onProgress) => {
   });
 };
 export const uploadCv   = (file, onProgress) => upload("/uploads/cv", file, onProgress);
+export const getFileLink = (url) => API.get("/uploads/link", { params: { url } });
+
+// Open an uploaded CV in a new tab through a short-lived signed link
+// (direct Cloudinary links to PDFs/Word files are blocked on new accounts).
+// The tab is opened first, inside the click, so pop-up blockers allow it.
+export async function openFile(url) {
+  if (!/res\.cloudinary\.com/.test(url)) {
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  const tab = window.open("", "_blank");
+  try {
+    const { data } = await getFileLink(url);
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = data.url;
+    } else window.location.href = data.url;
+  } catch (err) {
+    tab?.close();
+    throw err;
+  }
+}
 export const uploadLogo = (file, onProgress) => upload("/uploads/logo", file, onProgress);
 
 // ---- Jobs ----

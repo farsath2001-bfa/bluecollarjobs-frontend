@@ -385,6 +385,7 @@ const hi = {
   "footer.touch": "संपर्क करें",
   "footer.sendMessage": "हमें संदेश भेजें",
   "footer.whatsapp": "WhatsApp करें",
+  "footer.install": "ऐप इंस्टॉल करें",
   "footer.hiring": "भर्ती कर रहे हैं?",
   "footer.postWithUs": "हमारे साथ नौकरी पोस्ट करें",
   "footer.rights": "© {year} Jobz Dxb. सर्वाधिकार सुरक्षित।",

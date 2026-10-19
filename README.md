@@ -25,6 +25,10 @@ English, Arabic, Hindi and Urdu, switched from the globe button in the top bar (
 - Trades, emirates, benefits and job types are stored in English in the database and translated for display (`tCategory`, `tLocation`, `tBenefit`, `tJobType` in `utils/format.js`).
 - The admin panel stays in English.
 
+## Install as an app (PWA)
+
+`public/manifest.webmanifest`, `public/icons/` and `public/sw.js` make the site installable on phones and computers. The service worker only runs in production builds; it keeps pages fresh (network first) and caches built files, and never caches API responses. After changing `sw.js`, bump `VERSION` inside it so old caches are cleared.
+
 ## SEO
 
 - Each page sets its title, description, Open Graph tags and canonical URL (`utils/useTitle.js`).

@@ -401,6 +401,7 @@ const en = {
   "footer.touch": "Get in touch",
   "footer.sendMessage": "Send us a message",
   "footer.whatsapp": "WhatsApp us",
+  "footer.install": "Install the app",
   "footer.hiring": "Hiring?",
   "footer.postWithUs": "Post a job with us",
   "footer.rights": "© {year} Jobz Dxb. All rights reserved.",

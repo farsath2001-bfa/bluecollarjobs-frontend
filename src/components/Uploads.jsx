@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FaFileAlt, FaCloudUploadAlt, FaImage } from "react-icons/fa";
-import { getUploadStatus, uploadCv, uploadLogo, errorMessage } from "../service/api";
+import { getUploadStatus, uploadCv, uploadLogo, openFile, errorMessage } from "../service/api";
 import { useT } from "../context/LanguageContext";
 import { useToast } from "../context/ToastContext";
 import { resolveLogo } from "../utils/format";
@@ -116,7 +116,7 @@ export function CvField({ id = "resume", value, onChange }) {
             {url ? (
               <>
                 <div className="file-name">{value?.name || fileNameFromUrl(url)}</div>
-                <a href={url} target="_blank" rel="noreferrer" className="small">{t("cv.view")}</a>
+                <button type="button" className="link-btn small" onClick={() => openFile(url).catch((err) => toast(errorMessage(err), "error"))}>{t("cv.view")}</button>
               </>
             ) : (
               <>

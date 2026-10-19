@@ -4,7 +4,7 @@ import { FaPhoneAlt, FaWhatsapp, FaEnvelope, FaSearch, FaFileAlt, FaDownload } f
 import AdminShell from "./AdminShell";
 import { EmptyState, Modal, StatusBadge } from "../../components/ui";
 import { useTitle } from "../../utils/useTitle";
-import { adminGetApplications, adminUpdateApplication, errorMessage } from "../../service/api";
+import { adminGetApplications, adminUpdateApplication, openFile, errorMessage } from "../../service/api";
 import { useToast } from "../../context/ToastContext";
 import { formatDate, timeAgo } from "../../utils/format";
 import { downloadCsv } from "../../utils/csv";
@@ -72,7 +72,11 @@ function ApplicationModal({ app, onChange, onClose }) {
         {phone && <a className="btn btn-primary btn-sm" href={`tel:${phone}`}><FaPhoneAlt /> {phone}</a>}
         {phone && <a className="btn btn-light-line btn-sm" href={`https://wa.me/${waNumber(phone)}`} target="_blank" rel="noreferrer"><FaWhatsapp /> WhatsApp</a>}
         {person.email && <a className="btn btn-light-line btn-sm" href={`mailto:${person.email}`}><FaEnvelope /> Email</a>}
-        {(app.resume || person.resume) && <a className="btn btn-light-line btn-sm" href={app.resume || person.resume} target="_blank" rel="noreferrer"><FaFileAlt /> CV</a>}
+        {(app.resume || person.resume) && (
+          <button type="button" className="btn btn-light-line btn-sm" onClick={() => openFile(app.resume || person.resume).catch((err) => toast(errorMessage(err), "error"))}>
+            <FaFileAlt /> Open CV
+          </button>
+        )}
       </div>
 
       <div className="detail-facts mb-3">

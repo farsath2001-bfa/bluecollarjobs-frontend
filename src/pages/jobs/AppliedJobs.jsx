@@ -5,18 +5,12 @@ import { CompanyLogo, ConfirmDialog, EmptyState, PageHead, StatusBadge, JobRowSk
 import { useTitle } from "../../utils/useTitle";
 import { getMyApplications, withdrawApplication, errorMessage } from "../../service/api";
 import { useToast } from "../../context/ToastContext";
-import { formatSalary, formatDate } from "../../utils/format";
-
-const STATUS_HELP = {
-  pending: "Sent. The employer hasn't opened it yet.",
-  reviewed: "The employer has looked at your application.",
-  shortlisted: "You're on the shortlist. Expect a call soon.",
-  accepted: "Congratulations — the employer wants to hire you.",
-  rejected: "The employer chose other candidates this time.",
-};
+import { formatSalary, formatDate, tLocation } from "../../utils/format";
+import { useT } from "../../context/LanguageContext";
 
 function AppliedJobs() {
-  useTitle("My applications");
+  const t = useT();
+  useTitle(t("applied.title"));
   const toast = useToast();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +31,7 @@ function AppliedJobs() {
       setBusy(true);
       await withdrawApplication(confirm._id);
       setApps((a) => a.filter((x) => x._id !== confirm._id));
-      toast("Application withdrawn");
+      toast(t("applied.withdrawn"));
       setConfirm(null);
     } catch (err) {
       toast(errorMessage(err), "error");
@@ -51,8 +45,8 @@ function AppliedJobs() {
 
   return (
     <>
-      <PageHead title="My applications" crumb={<Link to="/dashboard">Dashboard</Link>}>
-        Every job you've applied for and where it stands.
+      <PageHead title={t("applied.title")} crumb={<Link to="/dashboard">{t("nav.dashboard")}</Link>}>
+        {t("applied.sub")}
       </PageHead>
 
       <div className="container section-tight">
@@ -61,7 +55,7 @@ function AppliedJobs() {
             {["all", "pending", "reviewed", "shortlisted", "accepted", "rejected"].map((s) =>
               s === "all" || counts[s] ? (
                 <button key={s} type="button" className={`btn btn-sm ${filter === s ? "btn-primary" : "btn-light-line"}`} onClick={() => setFilter(s)}>
-                  {s === "all" ? `All (${apps.length})` : `${s[0].toUpperCase() + s.slice(1)} (${counts[s]})`}
+                  {s === "all" ? t("applied.all", { n: apps.length }) : `${t(`status.${s}`)} (${counts[s]})`}
                 </button>
               ) : null
             )}
@@ -71,10 +65,10 @@ function AppliedJobs() {
         {loading ? (
           <JobRowSkeleton count={3} />
         ) : error ? (
-          <EmptyState title="Applications couldn't load">{error}</EmptyState>
+          <EmptyState title={t("applied.failed")}>{error}</EmptyState>
         ) : apps.length === 0 ? (
-          <EmptyState icon={<FaFileAlt />} title="You haven't applied for any jobs yet" action={<Link to="/jobs" className="btn btn-primary">Find jobs</Link>}>
-            When you apply, you'll see each application and its status here.
+          <EmptyState icon={<FaFileAlt />} title={t("applied.none")} action={<Link to="/jobs" className="btn btn-primary">{t("common.findJobs")}</Link>}>
+            {t("applied.noneSub")}
           </EmptyState>
         ) : (
           <div className="job-list">
@@ -88,18 +82,18 @@ function AppliedJobs() {
                       {job ? (
                         <Link to={`/jobs/${job._id}`} className="fw-bold fs-6 text-reset">{job.title}</Link>
                       ) : (
-                        <span className="fw-bold">Job removed</span>
+                        <span className="fw-bold">{t("dash.jobRemoved")}</span>
                       )}
                       <div className="text-steel small">
-                        {job?.companyName} · {job?.location} · Applied {formatDate(a.createdAt)}
+                        {[job?.companyName, tLocation(job?.location), t("applied.on", { date: formatDate(a.createdAt) })].filter(Boolean).join(" · ")}
                       </div>
-                      <div className="small mt-2">{STATUS_HELP[a.status]}</div>
+                      <div className="small mt-2">{t(`statusHelp.${a.status}`)}</div>
                     </div>
                     <div className="text-end d-flex flex-column align-items-end gap-2">
                       <StatusBadge status={a.status} />
-                      {formatSalary(job?.salary) && <span className="salary" style={{ fontSize: "1rem" }}>{formatSalary(job.salary)}</span>}
+                      {formatSalary(job?.salary) && <span className="salary ltr" style={{ fontSize: "1rem" }}>{formatSalary(job.salary)}</span>}
                       {a.status === "pending" && (
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirm(a)}>Withdraw</button>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirm(a)}>{t("applied.withdraw")}</button>
                       )}
                     </div>
                   </div>
@@ -112,9 +106,9 @@ function AppliedJobs() {
 
       {confirm && (
         <ConfirmDialog
-          title="Withdraw application?"
-          message={`Your application for ${confirm.job?.title || "this job"} will be removed. You can apply again later if the job is still open.`}
-          confirmLabel="Withdraw"
+          title={t("applied.withdrawTitle")}
+          message={t("applied.withdrawText", { title: confirm.job?.title || "" })}
+          confirmLabel={t("applied.withdraw")}
           busy={busy}
           onConfirm={withdraw}
           onCancel={() => setConfirm(null)}

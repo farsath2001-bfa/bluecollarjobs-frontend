@@ -11,6 +11,26 @@
     <meta property="og:title" content="Jobz Dxb — Blue-collar jobs in the UAE" />
     <meta property="og:description" content="Driver, technician, cleaner, security and delivery jobs with salary shown upfront." />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jobz Dxb" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Tells Google the site name and enables a search box for the site in results -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Jobz Dxb",
+        "url": "https://bluecollarjobs-frontend.vercel.app/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://bluecollarjobs-frontend.vercel.app/jobs?keyword={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

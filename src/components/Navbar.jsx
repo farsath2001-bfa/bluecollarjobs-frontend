@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { FaBars, FaTimes, FaThLarge, FaBookmark, FaFileAlt, FaUserEdit, FaSignOutAlt, FaCog } from "react-icons/fa";
+import { FaBars, FaTimes, FaThLarge, FaBookmark, FaFileAlt, FaUserEdit, FaSignOutAlt, FaCog, FaUserCircle } from "react-icons/fa";
 import logo from "../assets/Images/logo-small.png";
 import { useAuth } from "../context/AuthContext";
 import { initials } from "../utils/format";
+import { useT } from "../context/LanguageContext";
+import LanguageSwitch from "./LanguageSwitch";
 
 function Navbar() {
   const { user, isAdmin, logoutUser } = useAuth();
@@ -17,6 +19,7 @@ function Navbar() {
   const setMenu = (fn) => setMenuOn((typeof fn === "function" ? fn(menu) : fn) ? location.pathname : null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const t = useT();
 
   // Close the user menu when clicking outside it
   useEffect(() => {
@@ -32,11 +35,11 @@ function Navbar() {
   };
 
   const links = [
-    { to: "/", label: "Home", end: true },
-    { to: "/jobs", label: "Find jobs" },
-    { to: "/companies", label: "Companies" },
-    { to: "/about", label: "About" },
-    { to: "/contact", label: "Contact" },
+    { to: "/", label: t("nav.home"), end: true },
+    { to: "/jobs", label: t("nav.jobs") },
+    { to: "/companies", label: t("nav.companies") },
+    { to: "/about", label: t("nav.about") },
+    { to: "/contact", label: t("nav.contact") },
   ];
 
   return (
@@ -52,7 +55,7 @@ function Navbar() {
           className="nav-toggle"
           aria-expanded={open}
           aria-controls="main-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
           onClick={() => setOpen((o) => !o)}
         >
           {open ? <FaTimes /> : <FaBars />}
@@ -70,13 +73,13 @@ function Navbar() {
           <div className="nav-actions">
             {!user ? (
               <>
-                <Link to="/login" className="btn btn-sm btn-nav-login">Log in</Link>
-                <Link to="/register" className="btn btn-sm btn-nav-cta">Create account</Link>
+                <Link to="/login" className="btn btn-sm btn-nav-login">{t("nav.login")}</Link>
+                <Link to="/register" className="btn btn-sm btn-nav-cta">{t("nav.register")}</Link>
               </>
             ) : (
               <div className="user-menu" ref={menuRef}>
                 <button type="button" className="user-chip" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu((m) => !m)}>
-                  <span className="avatar">{initials(user.name)}</span>
+                  <span className="avatar" lang="en">{initials(user.name)}</span>
                   <span>{user.name?.split(" ")[0]}</span>
                 </button>
                 {menu && (
@@ -87,25 +90,28 @@ function Navbar() {
                     </div>
                     {isAdmin ? (
                       <>
-                        <Link to="/admin" role="menuitem"><FaCog /> Admin panel</Link>
-                        <Link to="/admin/jobs" role="menuitem"><FaThLarge /> Manage jobs</Link>
-                        <Link to="/admin/applications" role="menuitem"><FaFileAlt /> Applications</Link>
+                        <Link to="/admin" role="menuitem"><FaCog /> {t("nav.adminPanel")}</Link>
+                        <Link to="/admin/jobs" role="menuitem"><FaThLarge /> {t("nav.manageJobs")}</Link>
+                        <Link to="/admin/applications" role="menuitem"><FaFileAlt /> {t("nav.adminApplications")}</Link>
+                        <Link to="/admin/account" role="menuitem"><FaUserCircle /> {t("nav.myAccount")}</Link>
                       </>
                     ) : (
                       <>
-                        <Link to="/dashboard" role="menuitem"><FaThLarge /> My dashboard</Link>
-                        <Link to="/applied" role="menuitem"><FaFileAlt /> My applications</Link>
-                        <Link to="/saved" role="menuitem"><FaBookmark /> Saved jobs</Link>
-                        <Link to="/profile" role="menuitem"><FaUserEdit /> Edit profile</Link>
+                        <Link to="/dashboard" role="menuitem"><FaThLarge /> {t("nav.dashboard")}</Link>
+                        <Link to="/applied" role="menuitem"><FaFileAlt /> {t("nav.applications")}</Link>
+                        <Link to="/saved" role="menuitem"><FaBookmark /> {t("nav.saved")}</Link>
+                        <Link to="/profile" role="menuitem"><FaUserEdit /> {t("nav.profile")}</Link>
                       </>
                     )}
-                    <button type="button" role="menuitem" onClick={handleLogout}><FaSignOutAlt /> Log out</button>
+                    <button type="button" role="menuitem" onClick={handleLogout}><FaSignOutAlt /> {t("nav.logout")}</button>
                   </div>
                 )}
               </div>
             )}
           </div>
         </div>
+
+        <LanguageSwitch />
       </div>
     </nav>
   );

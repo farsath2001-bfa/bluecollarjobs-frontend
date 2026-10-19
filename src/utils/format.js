@@ -1,3 +1,4 @@
+import { translate, getLanguage, LOCALES } from "../i18n";
 import abcLogo from "../assets/CompanyLogos/abc.png";
 import alnoorLogo from "../assets/CompanyLogos/alnoor.png";
 import brightLogo from "../assets/CompanyLogos/bright.png";
@@ -45,21 +46,56 @@ export const formatSalary = (salary) => {
   return s;
 };
 
+const locale = () => LOCALES[getLanguage()] || "en-GB";
+
+export const formatDate = (date) =>
+  date ? new Date(date).toLocaleDateString(locale(), { day: "numeric", month: "short", year: "numeric" }) : "";
+
 export const timeAgo = (date) => {
   if (!date) return "";
   const diff = (Date.now() - new Date(date).getTime()) / 1000;
-  if (diff < 3600) return "Just now";
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 3600) return translate("common.justNow");
+  if (diff < 86400) return translate("common.hoursAgo", { n: Math.floor(diff / 3600) });
   const days = Math.floor(diff / 86400);
-  if (days === 1) return "Yesterday";
-  if (days < 30) return `${days} days ago`;
-  return new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  if (days === 1) return translate("common.yesterday");
+  if (days < 30) return translate("common.daysAgo", { n: days });
+  return formatDate(date);
 };
 
 export const isNew = (date) => date && Date.now() - new Date(date).getTime() < 3 * 86400 * 1000;
 
-export const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+// Values stored in English in the database (trades, emirates, benefits, job types) → current language.
+// Unknown values (custom trades, free-text locations) are shown as typed.
+const label = (prefix) => (value) => {
+  if (!value) return value;
+  const key = `${prefix}.${value}`;
+  const out = translate(key);
+  return out === key ? value : out;
+};
+export const tCategory = label("cat");
+export const tJobType = label("jobType");
+export const tBenefit = label("benefit");
+// "Al Quoz, Dubai" → each comma part translated if it's a known emirate
+export const tLocation = (loc) => {
+  if (!loc) return loc;
+  const sep = ["ar", "ur"].includes(getLanguage()) ? "، " : ", ";
+  return String(loc).split(/\s*,\s*/).map(label("emirate")).join(sep);
+};
+export const tEmirate = label("emirate");
+
+// Closing-date info for a job: null when no date set
+export const closingInfo = (expiresAt) => {
+  if (!expiresAt) return null;
+  const end = new Date(expiresAt);
+  if (end.getTime() <= Date.now()) return { closed: true, text: translate("common.closed") };
+  // Count calendar days, so a job closing "Thursday" reads the same all day Monday
+  const startOf = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOf(end) - startOf(new Date())) / 86400000);
+  if (days === 0) return { soon: true, text: translate("common.closesToday") };
+  if (days === 1) return { soon: true, text: translate("common.closesTomorrow") };
+  if (days <= 7) return { soon: true, text: translate("common.closesIn", { n: days }) };
+  return { text: translate("common.closesOn", { date: formatDate(end) }) };
+};
 
 export const EMIRATES = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah", "Al Ain"];
 

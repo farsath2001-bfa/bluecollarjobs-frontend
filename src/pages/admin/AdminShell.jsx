@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FaChartBar, FaBriefcase, FaBuilding, FaFileAlt, FaUsers, FaEnvelope } from "react-icons/fa";
+import { FaChartBar, FaBriefcase, FaBuilding, FaFileAlt, FaUsers, FaEnvelope, FaUserCircle } from "react-icons/fa";
 import { adminGetStats } from "../../service/api";
 
 // Shared header + tab bar for every admin page
@@ -18,6 +18,7 @@ function AdminShell({ title, actions, children }) {
     { to: "/admin/applications", label: "Applications", icon: FaFileAlt, count: stats?.pendingApplications },
     { to: "/admin/users", label: "Users", icon: FaUsers },
     { to: "/admin/messages", label: "Messages", icon: FaEnvelope, count: stats?.unreadMessages },
+    { to: "/admin/account", label: "My account", icon: FaUserCircle },
   ];
 
   return (

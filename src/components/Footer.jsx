@@ -1,57 +1,61 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaEnvelope, FaMapMarkerAlt, FaRegCommentDots } from "react-icons/fa";
+import { FaEnvelope, FaMapMarkerAlt, FaRegCommentDots, FaWhatsapp } from "react-icons/fa";
 import logo from "../assets/Images/logo-small.png";
+import { useT } from "../context/LanguageContext";
+import { SITE_WHATSAPP, waLink } from "../utils/whatsapp";
 
 function Footer() {
+  const t = useT();
   return (
     <footer className="site-footer">
       <div className="container">
         <div className="row g-4">
           <div className="col-lg-4">
-            <Link to="/" className="brand mb-3">
+            <Link to="/" className="brand mb-3" lang="en">
               <img src={logo} alt="" />
               Jobz Dxb
             </Link>
-            <p className="mt-3 mb-0" style={{ maxWidth: "34ch" }}>
-              Jobs for drivers, technicians, cleaners, guards and riders across Dubai and the UAE — with the salary shown upfront.
-            </p>
+            <p className="mt-3 mb-0" style={{ maxWidth: "34ch" }}>{t("footer.tagline")}</p>
           </div>
 
           <div className="col-6 col-lg-2">
-            <h4>Job seekers</h4>
+            <h4>{t("footer.seekers")}</h4>
             <ul>
-              <li><Link to="/jobs">Find jobs</Link></li>
-              <li><Link to="/companies">Companies</Link></li>
-              <li><Link to="/register">Create account</Link></li>
-              <li><Link to="/saved">Saved jobs</Link></li>
+              <li><Link to="/jobs">{t("nav.jobs")}</Link></li>
+              <li><Link to="/companies">{t("nav.companies")}</Link></li>
+              <li><Link to="/register">{t("nav.register")}</Link></li>
+              <li><Link to="/saved">{t("nav.saved")}</Link></li>
             </ul>
           </div>
 
           <div className="col-6 col-lg-2">
-            <h4>Popular</h4>
+            <h4>{t("footer.popular")}</h4>
             <ul>
-              <li><Link to="/jobs?category=Driver">Driver jobs</Link></li>
-              <li><Link to="/jobs?category=Security">Security jobs</Link></li>
-              <li><Link to="/jobs?category=Cleaning">Cleaning jobs</Link></li>
-              <li><Link to="/jobs?location=Dubai">Jobs in Dubai</Link></li>
+              <li><Link to="/jobs?category=Driver">{t("footer.driverJobs")}</Link></li>
+              <li><Link to="/jobs?category=Security">{t("footer.securityJobs")}</Link></li>
+              <li><Link to="/jobs?category=Cleaning">{t("footer.cleaningJobs")}</Link></li>
+              <li><Link to="/jobs?location=Dubai">{t("footer.dubaiJobs")}</Link></li>
             </ul>
           </div>
 
           <div className="col-lg-4">
-            <h4>Get in touch</h4>
+            <h4>{t("footer.touch")}</h4>
             <ul className="footer-contact">
-              <li><FaEnvelope aria-hidden="true" /><a href="mailto:support@jobzdxb.com">support@jobzdxb.com</a></li>
-              <li><FaRegCommentDots aria-hidden="true" /><Link to="/contact">Send us a message</Link></li>
-              <li><FaMapMarkerAlt aria-hidden="true" />Dubai, United Arab Emirates</li>
+              <li><FaEnvelope aria-hidden="true" /><a href="mailto:support@jobzdxb.com" className="ltr">support@jobzdxb.com</a></li>
+              {SITE_WHATSAPP && (
+                <li><FaWhatsapp aria-hidden="true" /><a href={waLink(SITE_WHATSAPP)} target="_blank" rel="noreferrer">{t("footer.whatsapp")}</a></li>
+              )}
+              <li><FaRegCommentDots aria-hidden="true" /><Link to="/contact">{t("footer.sendMessage")}</Link></li>
+              <li><FaMapMarkerAlt aria-hidden="true" />{t("contact.officeVal")}</li>
             </ul>
-            <p className="small mt-3 mb-0">Hiring? <Link to="/contact" className="text-white fw-semibold">Post a job with us</Link></p>
+            <p className="small mt-3 mb-0">{t("footer.hiring")} <Link to="/contact" className="text-white fw-semibold">{t("footer.postWithUs")}</Link></p>
           </div>
         </div>
 
         <div className="base">
-          <span>© {new Date().getFullYear()} Jobz Dxb. All rights reserved.</span>
-          <span>Never pay anyone to get a job. Report suspicious listings to us.</span>
+          <span>{t("footer.rights", { year: new Date().getFullYear() })}</span>
+          <span>{t("footer.scam")}</span>
         </div>
       </div>
     </footer>

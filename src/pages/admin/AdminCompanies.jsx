@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FaPlus, FaEdit, FaTrash, FaCheckCircle } from "react-icons/fa";
 import AdminShell from "./AdminShell";
 import { CompanyLogo, ConfirmDialog, EmptyState, Modal } from "../../components/ui";
+import { LogoUpload } from "../../components/Uploads";
 import { useTitle } from "../../utils/useTitle";
 import { getCompanies, adminCreateCompany, adminUpdateCompany, adminDeleteCompany, errorMessage } from "../../service/api";
 import { useToast } from "../../context/ToastContext";
@@ -82,10 +83,11 @@ function CompanyForm({ initial, onSaved, onClose }) {
             {form.logo && !BUNDLED_LOGOS[form.logo] && (
               <input className="form-control mt-2" placeholder="https://res.cloudinary.com/…/logo.png" value={form.logo} onChange={set("logo")} aria-label="Logo image URL" />
             )}
+            <LogoUpload preview={false} value={form.logo} onChange={(url) => setForm((f) => ({ ...f, logo: url }))} />
           </div>
           <div className="col-md-6">
-            <label className="form-label" htmlFor="c-phone">HR phone</label>
-            <input id="c-phone" className="form-control" value={form.phone} onChange={set("phone")} />
+            <label className="form-label" htmlFor="c-phone">HR phone / WhatsApp</label>
+            <input id="c-phone" type="tel" className="form-control" placeholder="050 123 4567" value={form.phone} onChange={set("phone")} />
           </div>
           <div className="col-md-6">
             <label className="form-label" htmlFor="c-email">HR email</label>

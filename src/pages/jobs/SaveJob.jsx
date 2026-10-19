@@ -6,9 +6,11 @@ import { EmptyState, JobRowSkeleton, PageHead } from "../../components/ui";
 import { useTitle } from "../../utils/useTitle";
 import { getSavedJobs, errorMessage } from "../../service/api";
 import { useSavedJobs } from "../../context/SavedJobsContext";
+import { useT } from "../../context/LanguageContext";
 
 function SavedJobs() {
-  useTitle("Saved jobs");
+  const t = useT();
+  useTitle(t("saved.title"));
   const { savedIds } = useSavedJobs();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,23 +28,23 @@ function SavedJobs() {
 
   return (
     <>
-      <PageHead title="Saved jobs" crumb={<Link to="/dashboard">Dashboard</Link>}>
-        Jobs you've bookmarked. Apply before they close.
+      <PageHead title={t("saved.title")} crumb={<Link to="/dashboard">{t("nav.dashboard")}</Link>}>
+        {t("saved.sub")}
       </PageHead>
       <div className="container section-tight">
         {loading ? (
           <JobRowSkeleton count={3} />
         ) : error ? (
-          <EmptyState title="Saved jobs couldn't load">{error}</EmptyState>
+          <EmptyState title={t("saved.failed")}>{error}</EmptyState>
         ) : visible.length === 0 ? (
-          <EmptyState icon={<FaRegBookmark />} title="No saved jobs" action={<Link to="/jobs" className="btn btn-primary">Find jobs</Link>}>
-            Tap the bookmark on any job to keep it here for later.
+          <EmptyState icon={<FaRegBookmark />} title={t("saved.none")} action={<Link to="/jobs" className="btn btn-primary">{t("common.findJobs")}</Link>}>
+            {t("saved.noneSub")}
           </EmptyState>
         ) : (
           <div className="job-list">
             {visible.map((s) => (
               <div key={s._id}>
-                {!s.job.isActive && <div className="small text-steel mb-1">This job is now closed</div>}
+                {(s.job.isOpen === false || !s.job.isActive) && <div className="small text-steel mb-1">{t("saved.closedNow")}</div>}
                 <JobCard {...s.job} />
               </div>
             ))}

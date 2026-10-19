@@ -1,4 +1,5 @@
 import axios from "axios";
+import { translate } from "../i18n";
 
 export const API_URL = (import.meta.env.VITE_API_URL || "https://bluecollarjobs-backend.onrender.com/api").replace(/\/$/, "");
 export const AUTH_KEY = "jobz.auth";
@@ -28,11 +29,11 @@ API.interceptors.response.use(
 );
 
 // Readable message from any axios error
-export const errorMessage = (err, fallback = "Something went wrong. Try again.") => {
+export const errorMessage = (err, fallback) => {
   if (err?.response?.data?.message) return err.response.data.message;
-  if (err?.code === "ECONNABORTED") return "The server took too long to answer. It may be waking up — try again in a moment.";
-  if (err?.message === "Network Error") return "Can't reach the server. Check your connection and try again.";
-  return fallback;
+  if (err?.code === "ECONNABORTED") return translate("common.timeout");
+  if (err?.message === "Network Error") return translate("common.network");
+  return fallback || translate("common.genericError");
 };
 
 // The list endpoint returns { jobs, total, page, pages }; older builds returned a plain array
@@ -45,6 +46,21 @@ export const registerUser   = (data) => API.post("/auth/register", data);
 export const getProfile     = ()     => API.get("/auth/profile");
 export const updateProfile  = (data) => API.put("/auth/profile", data);
 export const changePassword = (data) => API.put("/auth/password", data);
+export const forgotPassword = (email) => API.post("/auth/forgot-password", { email });
+export const resetPassword  = (token, password) => API.post(`/auth/reset-password/${token}`, { password });
+
+// ---- Uploads (Cloudinary on the backend) ----
+export const getUploadStatus = () => API.get("/uploads/status");
+const upload = (path, file, onProgress) => {
+  const form = new FormData();
+  form.append("file", file);
+  return API.post(path, form, {
+    timeout: 120000,
+    onUploadProgress: (e) => e.total && onProgress?.(Math.round((e.loaded / e.total) * 100)),
+  });
+};
+export const uploadCv   = (file, onProgress) => upload("/uploads/cv", file, onProgress);
+export const uploadLogo = (file, onProgress) => upload("/uploads/logo", file, onProgress);
 
 // ---- Jobs ----
 export const getJobs    = (params) => API.get("/jobs", { params });

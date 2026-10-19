@@ -1,5 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useT } from "../context/LanguageContext";
+import { tCategory } from "../utils/format";
 import {
   FaCar, FaBolt, FaWrench, FaTools, FaBroom, FaShieldAlt, FaMotorcycle,
   FaHardHat, FaBoxes, FaConciergeBell, FaUtensils, FaBriefcase, FaSnowflake, FaCalculator,
@@ -28,12 +30,13 @@ const categoryIcon = (name = "") => {
 };
 
 function JobCategory({ title, jobs }) {
+  const t = useT();
   return (
     <Link to={`/jobs?category=${encodeURIComponent(title)}`} className="cat-tile">
       <span className="ico" aria-hidden="true">{categoryIcon(title)}</span>
       <span>
-        <strong>{title}</strong>
-        <small>{jobs} {jobs === 1 ? "opening" : "openings"}</small>
+        <strong>{tCategory(title)}</strong>
+        <small>{t(jobs === 1 ? "common.opening" : "common.openings", { n: jobs })}</small>
       </span>
     </Link>
   );

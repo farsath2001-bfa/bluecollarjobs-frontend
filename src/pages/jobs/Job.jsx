@@ -5,11 +5,13 @@ import JobCard from "../../components/JobCard";
 import { JobRowSkeleton, EmptyState, Pagination, PageHead } from "../../components/ui";
 import { useTitle } from "../../utils/useTitle";
 import { getJobs, getJobMeta, normalizeJobList, errorMessage } from "../../service/api";
-import { EMIRATES, JOB_TYPES } from "../../utils/format";
+import { EMIRATES, JOB_TYPES, tCategory, tEmirate, tJobType, tLocation } from "../../utils/format";
+import { useT } from "../../context/LanguageContext";
 
 const FILTER_KEYS = ["keyword", "category", "location", "jobType", "minSalary", "sort", "page"];
 
 function Job() {
+  const t = useT();
   const [params, setParams] = useSearchParams();
   const [result, setResult] = useState({ jobs: [], total: 0, page: 1, pages: 1 });
   const [meta, setMeta] = useState(null);
@@ -23,7 +25,7 @@ function Job() {
   const page = Number(filters.page) || 1;
   const queryKey = params.toString();
 
-  useTitle(filters.category ? `${filters.category} jobs` : "Find jobs");
+  useTitle(filters.category ? t("jobs.titleCategory", { category: tCategory(filters.category) }) : t("jobs.title"), { description: t("seo.jobsDesc") });
 
   useEffect(() => {
     getJobMeta().then(({ data }) => setMeta(data)).catch(() => {});
@@ -66,9 +68,9 @@ function Job() {
 
   const active = [
     filters.keyword && { key: "keyword", label: `"${filters.keyword}"` },
-    filters.category && { key: "category", label: filters.category },
-    filters.location && { key: "location", label: filters.location },
-    filters.jobType && { key: "jobType", label: filters.jobType },
+    filters.category && { key: "category", label: tCategory(filters.category) },
+    filters.location && { key: "location", label: tLocation(filters.location) },
+    filters.jobType && { key: "jobType", label: tJobType(filters.jobType) },
     filters.minSalary && { key: "minSalary", label: `AED ${Number(filters.minSalary).toLocaleString()}+` },
   ].filter(Boolean);
 
@@ -76,8 +78,8 @@ function Job() {
 
   return (
     <>
-      <PageHead title={filters.category ? `${filters.category} jobs in the UAE` : "Find a job"}>
-        {meta ? `${meta.total} open jobs from ${meta.companies} employers.` : "Search open jobs across the UAE."}
+      <PageHead title={filters.category ? t("jobs.titleCategory", { category: tCategory(filters.category) }) : t("jobs.title")}>
+        {meta ? t("jobs.sub", { total: meta.total, companies: meta.companies }) : t("jobs.subDefault")}
       </PageHead>
 
       <div className="container section-tight">
@@ -86,13 +88,13 @@ function Job() {
             <FaSearch aria-hidden="true" />
             <input
               className="form-control form-control-lg"
-              placeholder="Search by job title, trade or company"
-              aria-label="Search jobs"
+              placeholder={t("jobs.searchPlaceholder")}
+              aria-label={t("jobs.searchPlaceholder")}
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
             />
           </div>
-          <button className="btn btn-primary btn-lg" type="submit">Search</button>
+          <button className="btn btn-primary btn-lg" type="submit">{t("common.search")}</button>
         </form>
 
         <div className="row g-4">
@@ -100,12 +102,12 @@ function Job() {
           <aside className={`col-lg-3 ${showFilters ? "" : "d-none d-lg-block"}`}>
             <div className="panel filter-pane">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h3 className="mb-0">Filters</h3>
-                {active.length > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={clearAll}>Clear all</button>}
+                <h3 className="mb-0">{t("jobs.filters")}</h3>
+                {active.length > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={clearAll}>{t("jobs.clearAll")}</button>}
               </div>
 
               <div className="filter-group">
-                <span className="label">Trade</span>
+                <span className="label">{t("jobs.trade")}</span>
                 <div style={{ maxHeight: 260, overflowY: "auto" }}>
                   {(meta?.categories || []).map((c) => (
                     <label className="check-row" key={c.name}>
@@ -116,46 +118,46 @@ function Job() {
                           checked={filters.category.toLowerCase() === c.name.toLowerCase()}
                           onChange={() => update({ category: c.name })}
                         />
-                        {c.name}
+                        {tCategory(c.name)}
                       </span>
                       <small>{c.count}</small>
                     </label>
                   ))}
                   {filters.category && (
-                    <button type="button" className="btn btn-ghost btn-sm px-0 mt-1" onClick={() => update({ category: "" })}>Any trade</button>
+                    <button type="button" className="btn btn-ghost btn-sm px-0 mt-1" onClick={() => update({ category: "" })}>{t("jobs.anyTrade")}</button>
                   )}
                 </div>
               </div>
 
               <div className="filter-group">
-                <label htmlFor="f-location">Emirate</label>
+                <label htmlFor="f-location">{t("jobs.emirate")}</label>
                 <select id="f-location" className="form-select" value={filters.location} onChange={(e) => update({ location: e.target.value })}>
-                  <option value="">All emirates</option>
-                  {locationOptions.map((l) => <option key={l} value={l}>{l}</option>)}
+                  <option value="">{t("common.allEmirates")}</option>
+                  {locationOptions.map((l) => <option key={l} value={l}>{tEmirate(l)}</option>)}
                 </select>
               </div>
 
               <div className="filter-group">
-                <span className="label">Job type</span>
-                {JOB_TYPES.map((t) => (
-                  <label className="check-row" key={t}>
+                <span className="label">{t("jobs.jobType")}</span>
+                {JOB_TYPES.map((jt) => (
+                  <label className="check-row" key={jt}>
                     <span>
-                      <input type="radio" name="jobType" checked={filters.jobType === t} onChange={() => update({ jobType: t })} />
-                      {t}
+                      <input type="radio" name="jobType" checked={filters.jobType === jt} onChange={() => update({ jobType: jt })} />
+                      {tJobType(jt)}
                     </span>
                   </label>
                 ))}
                 {filters.jobType && (
-                  <button type="button" className="btn btn-ghost btn-sm px-0 mt-1" onClick={() => update({ jobType: "" })}>Any type</button>
+                  <button type="button" className="btn btn-ghost btn-sm px-0 mt-1" onClick={() => update({ jobType: "" })}>{t("jobs.anyType")}</button>
                 )}
               </div>
 
               <div className="filter-group">
-                <label htmlFor="f-salary">Minimum salary</label>
+                <label htmlFor="f-salary">{t("jobs.minSalary")}</label>
                 <select id="f-salary" className="form-select" value={filters.minSalary} onChange={(e) => update({ minSalary: e.target.value })}>
-                  <option value="">Any salary</option>
+                  <option value="">{t("jobs.anySalary")}</option>
                   {[1500, 2000, 2500, 3000, 4000, 5000].map((s) => (
-                    <option key={s} value={s}>AED {s.toLocaleString()} or more</option>
+                    <option key={s} value={s}>{t("jobs.salaryOrMore", { n: s.toLocaleString("en-US") })}</option>
                   ))}
                 </select>
               </div>
@@ -166,11 +168,11 @@ function Job() {
           <section className="col-lg-9" aria-live="polite">
             <div className="results-bar">
               <div>
-                <strong>{loading ? "Searching…" : `${result.total} ${result.total === 1 ? "job" : "jobs"}`}</strong>
+                <strong>{loading ? t("jobs.searching") : t(result.total === 1 ? "common.job" : "common.jobs", { n: result.total })}</strong>
                 {active.length > 0 && (
                   <div className="active-filters mt-2">
                     {active.map((f) => (
-                      <button key={f.key} type="button" className="chip chip-blue" onClick={() => update({ [f.key]: "" })} aria-label={`Remove filter ${f.label}`}>
+                      <button key={f.key} type="button" className="chip chip-blue" onClick={() => update({ [f.key]: "" })} aria-label={t("jobs.removeFilter", { label: f.label })}>
                         {f.label} <FaTimes aria-hidden="true" />
                       </button>
                     ))}
@@ -179,12 +181,12 @@ function Job() {
               </div>
               <div className="d-flex gap-2 align-items-center">
                 <button type="button" className="btn btn-light-line d-lg-none" onClick={() => setShowFilters((s) => !s)} aria-expanded={showFilters}>
-                  <FaSlidersH /> {showFilters ? "Hide filters" : "Filters"}
+                  <FaSlidersH /> {showFilters ? t("jobs.hideFilters") : t("jobs.filters")}
                 </button>
-                <label htmlFor="sort" className="small-label d-none d-sm-inline">Sort</label>
+                <label htmlFor="sort" className="small-label d-none d-sm-inline">{t("jobs.sort")}</label>
                 <select id="sort" className="form-select" style={{ width: "auto" }} value={filters.sort} onChange={(e) => update({ sort: e.target.value })}>
-                  <option value="">Newest first</option>
-                  <option value="salary">Highest salary</option>
+                  <option value="">{t("jobs.newest")}</option>
+                  <option value="salary">{t("jobs.highestSalary")}</option>
                 </select>
               </div>
             </div>
@@ -192,7 +194,7 @@ function Job() {
             {loading ? (
               <JobRowSkeleton count={5} />
             ) : error ? (
-              <EmptyState title="Jobs couldn't load" action={<button className="btn btn-primary" onClick={() => setRetry((r) => r + 1)}>Try again</button>}>
+              <EmptyState title={t("jobs.failed")} action={<button className="btn btn-primary" onClick={() => setRetry((r) => r + 1)}>{t("common.tryAgain")}</button>}>
                 {error}
               </EmptyState>
             ) : result.jobs.length ? (
@@ -205,10 +207,10 @@ function Job() {
             ) : (
               <EmptyState
                 icon={<FaSearch />}
-                title="No jobs match these filters"
-                action={<button className="btn btn-primary" onClick={clearAll}>Clear filters</button>}
+                title={t("jobs.noMatch")}
+                action={<button className="btn btn-primary" onClick={clearAll}>{t("jobs.clearFilters")}</button>}
               >
-                Try a different trade or emirate, or remove the salary filter.
+                {t("jobs.noMatchSub")}
               </EmptyState>
             )}
           </section>

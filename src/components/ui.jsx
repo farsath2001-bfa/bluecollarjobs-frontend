@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { FaTimes } from "react-icons/fa";
 import { resolveLogo, initials } from "../utils/format";
+import { translate } from "../i18n";
 
 export function CompanyLogo({ logo, name, size = "" }) {
   const src = resolveLogo(logo);
@@ -36,12 +37,12 @@ export function EmptyState({ icon, title, children, action }) {
 }
 
 export function StatusBadge({ status }) {
-  return <span className={`status status-${status}`}>{status}</span>;
+  return <span className={`status status-${status}`}>{translate(`status.${status}`)}</span>;
 }
 
 export function JobRowSkeleton({ count = 4 }) {
   return (
-    <div className="job-list" aria-busy="true" aria-label="Loading jobs">
+    <div className="job-list" aria-busy="true" aria-label={translate("common.loading")}>
       {Array.from({ length: count }).map((_, i) => (
         <div className="job-row" key={i}>
           <div className="skel" style={{ width: 56, height: 56 }} />
@@ -65,7 +66,7 @@ export function Pagination({ page, pages, onChange }) {
   }
   return (
     <nav className="pager" aria-label="Pages">
-      <button type="button" disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="Previous page">‹</button>
+      <button type="button" disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="Previous page"><span className="flip-rtl d-inline-block">‹</span></button>
       {nums.map((n, i) =>
         n === "…" ? (
           <button key={`gap${i}`} type="button" disabled>…</button>
@@ -73,7 +74,7 @@ export function Pagination({ page, pages, onChange }) {
           <button key={n} type="button" aria-current={n === page ? "page" : undefined} onClick={() => onChange(n)}>{n}</button>
         )
       )}
-      <button type="button" disabled={page >= pages} onClick={() => onChange(page + 1)} aria-label="Next page">›</button>
+      <button type="button" disabled={page >= pages} onClick={() => onChange(page + 1)} aria-label="Next page"><span className="flip-rtl d-inline-block">›</span></button>
     </nav>
   );
 }
@@ -112,7 +113,7 @@ export function ConfirmDialog({ title, message, confirmLabel = "Delete", busy, o
       size="sm"
       footer={
         <>
-          <button type="button" className="btn btn-light-line" onClick={onCancel}>Cancel</button>
+          <button type="button" className="btn btn-light-line" onClick={onCancel}>{translate("common.cancel")}</button>
           <button type="button" className="btn btn-danger" onClick={onConfirm} disabled={busy}>
             {busy ? "Working…" : confirmLabel}
           </button>
@@ -124,11 +125,11 @@ export function ConfirmDialog({ title, message, confirmLabel = "Delete", busy, o
   );
 }
 
-export function Spinner({ label = "Loading…" }) {
+export function Spinner({ label }) {
   return (
     <div className="text-center py-5 text-steel" role="status">
       <div className="spinner-border text-primary mb-2" />
-      <div>{label}</div>
+      <div>{label || translate("common.loading")}</div>
     </div>
   );
 }

@@ -1,22 +1,40 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FaPhoneAlt, FaWhatsapp, FaEnvelope, FaSearch, FaFileAlt } from "react-icons/fa";
+import { FaPhoneAlt, FaWhatsapp, FaEnvelope, FaSearch, FaFileAlt, FaDownload } from "react-icons/fa";
 import AdminShell from "./AdminShell";
 import { EmptyState, Modal, StatusBadge } from "../../components/ui";
 import { useTitle } from "../../utils/useTitle";
 import { adminGetApplications, adminUpdateApplication, errorMessage } from "../../service/api";
 import { useToast } from "../../context/ToastContext";
 import { formatDate, timeAgo } from "../../utils/format";
+import { downloadCsv } from "../../utils/csv";
+import { toWhatsAppNumber } from "../../utils/whatsapp";
+
+const CSV_COLUMNS = [
+  { label: "Applied on", value: (a) => (a.createdAt ? new Date(a.createdAt).toISOString().slice(0, 10) : "") },
+  { label: "Status", value: (a) => a.status },
+  { label: "Name", value: (a) => a.applicant?.name },
+  { label: "Phone", value: (a) => a.phone || a.applicant?.phone },
+  { label: "Email", value: (a) => a.applicant?.email },
+  { label: "Job", value: (a) => a.job?.title },
+  { label: "Company", value: (a) => a.job?.companyName },
+  { label: "Job location", value: (a) => a.job?.location },
+  { label: "Can start", value: (a) => a.availableFrom },
+  { label: "Has UAE visa", value: (a) => (a.hasUaeVisa ? "Yes" : "No") },
+  { label: "Lives in", value: (a) => a.applicant?.location },
+  { label: "Nationality", value: (a) => a.applicant?.nationality },
+  { label: "Experience (years)", value: (a) => a.applicant?.experienceYears },
+  { label: "Skills", value: (a) => a.applicant?.skills },
+  { label: "Languages", value: (a) => a.applicant?.languages },
+  { label: "CV", value: (a) => a.resume || a.applicant?.resume },
+  { label: "Message", value: (a) => a.coverLetter },
+  { label: "Private note", value: (a) => a.adminNote },
+];
 
 const STATUSES = ["pending", "reviewed", "shortlisted", "accepted", "rejected"];
 
 // UAE numbers typed as 050… → 97150… for WhatsApp links
-const waNumber = (phone = "") => {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("00")) return digits.slice(2);
-  if (digits.startsWith("0")) return `971${digits.slice(1)}`;
-  return digits;
-};
+const waNumber = (phone = "") => toWhatsAppNumber(phone) || phone.replace(/\D/g, "");
 
 function ApplicationModal({ app, onChange, onClose }) {
   const toast = useToast();
@@ -143,7 +161,20 @@ function AdminApplications() {
   const jobTitle = jobFilter && apps.find((a) => a.job?._id === jobFilter)?.job?.title;
 
   return (
-    <AdminShell title="Applications">
+    <AdminShell
+      title="Applications"
+      actions={
+        <button
+          type="button"
+          className="btn btn-light-line"
+          disabled={!shown.length}
+          onClick={() => downloadCsv(`applications-${new Date().toISOString().slice(0, 10)}.csv`, CSV_COLUMNS, shown)}
+          title="Download the applications shown below as a spreadsheet"
+        >
+          <FaDownload /> Export CSV ({shown.length})
+        </button>
+      }
+    >
       <div className="toolbar">
         <div className="input-icon grow">
           <FaSearch aria-hidden="true" />

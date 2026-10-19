@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { translate } from "../i18n";
 import { useNavigate } from "react-router-dom";
 import { getSavedIds, saveJob, unsaveJob, errorMessage } from "../service/api";
 import { useAuth } from "./AuthContext";
@@ -26,7 +27,7 @@ export const SavedJobsProvider = ({ children }) => {
   const toggle = useCallback(
     async (jobId) => {
       if (!user) {
-        toast("Log in to save jobs", "error");
+        toast(translate("common.loginToSave"), "error");
         navigate("/login", { state: { from: window.location.pathname } });
         return;
       }
@@ -39,7 +40,7 @@ export const SavedJobsProvider = ({ children }) => {
       });
       try {
         await (wasSaved ? unsaveJob(jobId) : saveJob(jobId));
-        toast(wasSaved ? "Removed from saved jobs" : "Job saved");
+        toast(translate(wasSaved ? "common.jobUnsaved" : "common.jobSaved"));
       } catch (err) {
         setIds((prev) => {
           const next = new Set(prev);

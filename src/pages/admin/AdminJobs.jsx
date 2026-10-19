@@ -8,12 +8,24 @@ import {
   adminGetJobs, adminCreateJob, adminUpdateJob, adminDeleteJob, getCompanies, errorMessage,
 } from "../../service/api";
 import { useToast } from "../../context/ToastContext";
+import { LogoUpload } from "../../components/Uploads";
 import { BUNDLED_LOGOS, BENEFIT_OPTIONS, COMMON_CATEGORIES, EMIRATES, JOB_TYPES, formatSalary, formatDate } from "../../utils/format";
 
 const EMPTY = {
   title: "", description: "", category: "", location: "Dubai", company: "", companyName: "", logo: "",
   salary: "", jobType: "Full-time", requirements: "", benefits: [], vacancies: 1, isActive: true,
+  contactPhone: "", expiresAt: "",
 };
+
+// <input type="date"> works with YYYY-MM-DD in local time
+const toDateInput = (d) => {
+  if (!d) return "";
+  const x = new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+};
+// A closing date means "open until the end of that day"
+const fromDateInput = (s) => (s ? new Date(`${s}T23:59:59`).toISOString() : "");
+const isExpired = (j) => j.expiresAt && new Date(j.expiresAt) <= new Date();
 
 function JobForm({ initial, companies, onSaved, onClose }) {
   const toast = useToast();
@@ -39,7 +51,7 @@ function JobForm({ initial, companies, onSaved, onClose }) {
       setError("Title, company, trade, location and description are required");
       return;
     }
-    const payload = { ...form, vacancies: Number(form.vacancies) || 1 };
+    const payload = { ...form, vacancies: Number(form.vacancies) || 1, expiresAt: fromDateInput(form.expiresAt) };
     try {
       setSaving(true);
       const { data } = editing ? await adminUpdateJob(initial._id, payload) : await adminCreateJob(payload);
@@ -102,6 +114,7 @@ function JobForm({ initial, companies, onSaved, onClose }) {
               {form.logo && !BUNDLED_LOGOS[form.logo] && (
                 <input className="form-control mt-2" placeholder="https://…/logo.png" value={form.logo} onChange={set("logo")} aria-label="Logo image URL" />
               )}
+              <LogoUpload value={form.logo} onChange={(url) => setForm((f) => ({ ...f, logo: url }))} />
             </div>
           )}
 
@@ -124,7 +137,7 @@ function JobForm({ initial, companies, onSaved, onClose }) {
           <div className="col-md-4">
             <label className="form-label" htmlFor="j-type">Job type</label>
             <select id="j-type" className="form-select" value={form.jobType} onChange={set("jobType")}>
-              {JOB_TYPES.map((t) => <option key={t}>{t}</option>)}
+              {JOB_TYPES.map((jt) => <option key={jt}>{jt}</option>)}
             </select>
           </div>
           <div className="col-md-3">
@@ -149,6 +162,16 @@ function JobForm({ initial, companies, onSaved, onClose }) {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="col-md-6">
+            <label className="form-label" htmlFor="j-phone">WhatsApp / phone for this job</label>
+            <input id="j-phone" type="tel" className="form-control" placeholder="050 123 4567" value={form.contactPhone} onChange={set("contactPhone")} />
+            <div className="form-text">Shows an “Apply on WhatsApp” button. Leave empty to use the company's phone.</div>
+          </div>
+          <div className="col-md-6">
+            <label className="form-label" htmlFor="j-exp">Closing date</label>
+            <input id="j-exp" type="date" className="form-control" min={editing ? undefined : toDateInput(new Date())} value={form.expiresAt} onChange={set("expiresAt")} />
+            <div className="form-text">The job hides itself after this day. Leave empty to keep it open.</div>
           </div>
           <div className="col-12">
             <label className="d-flex align-items-center gap-2" style={{ cursor: "pointer" }}>
@@ -188,7 +211,7 @@ function AdminJobs() {
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     return jobs
-      .filter((j) => status === "all" || (status === "open" ? j.isActive : !j.isActive))
+      .filter((j) => status === "all" || (status === "open" ? j.isActive && !isExpired(j) : !j.isActive || isExpired(j)))
       .filter((j) => !q || [j.title, j.companyName, j.category, j.location].some((v) => v?.toLowerCase().includes(q)));
   }, [jobs, search, status]);
 
@@ -199,6 +222,8 @@ function AdminJobs() {
       company: job.company?._id || job.company || "",
       requirements: (job.requirements || []).join("\n"),
       benefits: job.benefits || [],
+      contactPhone: job.contactPhone || "",
+      expiresAt: toDateInput(job.expiresAt),
     });
 
   const closeForm = () => {
@@ -244,8 +269,8 @@ function AdminJobs() {
         </div>
         <select className="form-select" style={{ width: "auto" }} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
           <option value="all">All jobs ({jobs.length})</option>
-          <option value="open">Open ({jobs.filter((j) => j.isActive).length})</option>
-          <option value="closed">Closed ({jobs.filter((j) => !j.isActive).length})</option>
+          <option value="open">Open ({jobs.filter((j) => j.isActive && !isExpired(j)).length})</option>
+          <option value="closed">Closed or expired ({jobs.filter((j) => !j.isActive || isExpired(j)).length})</option>
         </select>
       </div>
 
@@ -282,6 +307,11 @@ function AdminJobs() {
                     <button type="button" className={`status status-${j.isActive ? "active" : "closed"} border-0`} onClick={() => toggleActive(j)} title={j.isActive ? "Click to close" : "Click to reopen"}>
                       {j.isActive ? "Open" : "Closed"}
                     </button>
+                    {j.isActive && j.expiresAt && (
+                      <div className={`small mt-1 ${isExpired(j) ? "text-danger fw-semibold" : "text-steel"}`}>
+                        {isExpired(j) ? "Expired" : "Until"} {formatDate(j.expiresAt)}
+                      </div>
+                    )}
                   </td>
                   <td className="text-nowrap small text-steel">{formatDate(j.createdAt)}</td>
                   <td className="text-nowrap text-end">

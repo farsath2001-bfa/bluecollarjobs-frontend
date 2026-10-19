@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /applied
+Disallow: /saved
+Disallow: /apply/
+Disallow: /reset-password/
+
+Sitemap: https://bluecollarjobs-frontend.vercel.app/sitemap.xml
